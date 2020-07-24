@@ -1,0 +1,75 @@
+<?xml version="1.0"?>
+<project
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+	xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>it.4science.dspace</groupId>
+		<artifactId>rioxxintegration</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
+	</parent>
+	<groupId>it.4science.dspace</groupId>
+	<artifactId>rioxxintegration-xmlui</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<packaging>war</packaging>
+	<name>4Science Ref and Rioxx XMLUI</name>
+	
+    <properties>
+        <!-- This is the path to the root [dspace-src] directory. -->
+        <root.basedir>${basedir}/..</root.basedir>
+    </properties>
+    
+	<build>
+		<finalName>rioxxintegration-xmlui</finalName>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-war-plugin</artifactId>
+				<version>2.4</version>
+				<configuration>
+					<attachClasses>true</attachClasses>
+					<!-- In version 2.1-alpha-1, this was incorrectly named warSourceExcludes -->
+					<!-- <packagingExcludes>WEB-INF/lib/*.jar</packagingExcludes> -->
+					<warSourceExcludes>WEB-INF/lib/*.jar</warSourceExcludes>
+					<failOnMissingWebXml>false</failOnMissingWebXml>
+					<webResources>
+						<resource>
+							<filtering>true</filtering>
+							<directory>${basedir}/src/main/webapp</directory>
+							<includes>
+								<include>WEB-INF/web.xml</include>
+							</includes>
+						</resource>
+					</webResources>
+				</configuration>
+				<executions>
+					<execution>
+						<phase>prepare-package</phase>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>	
+	
+	<dependencies>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>3.8.1</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.dspace</groupId>
+			<artifactId>dspace-xmlui</artifactId>
+			<type>jar</type>
+			<classifier>classes</classifier>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>jstl</artifactId>
+			<version>1.2</version>
+		</dependency>
+	</dependencies>
+</project>

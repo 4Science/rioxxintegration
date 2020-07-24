@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright (c) 2002-2010, DuraSpace.  All rights reserved
+    Licensed under the DuraSpace License.
+
+    A copy of the DuraSpace License has been included in this
+    distribution and is available at: http://www.dspace.org/license
+
+-->
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans.xsd
+           http://www.springframework.org/schema/context
+           http://www.springframework.org/schema/context/spring-context.xsd
+       http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.1.xsd">
+
+    <context:annotation-config /> <!-- allows us to use spring annotations in beans -->
+
+    <!-- REF Compliance check service -->
+    <bean class="org.dspace.ref.compliance.service.ComplianceCheckServiceBean" id="refComplianceCheckService" autowire-candidate="true">
+        <property name="fakeIfEmptyDuringValidation" ref="fakeIfEmptyDuringValidation"/>
+        <property name="fakeIfEmptyDuringUnarchivedValidation" ref="fakeIfEmptyDuringUnarchivedValidation"/>
+        <property name="rulesFactory" ref="refComplianceCategoryRulesFactoryBean"/>
+        <property name="identifier" value="ref"/>
+    </bean>
+
+    <!-- REF Compliance rules factory -->
+    <bean class="org.dspace.ref.compliance.rules.factory.ComplianceCategoryRulesFactoryBean" id="refComplianceCategoryRulesFactoryBean" autowire-candidate="true">
+        <property name="builderMap" ref="builderMap"/>
+        <!-- minutes to wait between category set updates -->
+        <property name="minutesBetweentCategorySetupdate" value="30"/>
+        <property name="ruleDefinitionFile" value="ref-validation-rules.xml"/>
+    </bean>
+
+    <!-- RIOXX Compliance check service -->
+    <bean class="org.dspace.ref.compliance.service.ComplianceCheckServiceBean" id="rioxxComplianceCheckService" autowire-candidate="true">
+        <property name="rulesFactory" ref="rioxxComplianceCategoryRulesFactoryBean"/>
+        <property name="identifier" value="rioxx"/>
+    </bean>
+
+    <!-- RIOXX Compliance rules factory -->
+    <bean class="org.dspace.ref.compliance.rules.factory.ComplianceCategoryRulesFactoryBean" id="rioxxComplianceCategoryRulesFactoryBean" autowire-candidate="true">
+        <property name="builderMap" ref="builderMap"/>
+        <!-- minutes to wait between category set updates -->
+        <property name="minutesBetweentCategorySetupdate" value="30"/>
+        <property name="ruleDefinitionFile" value="rioxx-validation-rules.xml"/>
+    </bean>
+
+    <util:map id="builderMap">
+        <entry key="value">
+            <bean class="org.dspace.ref.compliance.rules.factory.ValueRuleBuilder"/>
+        </entry>
+        <entry key="notBlank">
+            <bean class="org.dspace.ref.compliance.rules.factory.NotBlankRuleBuilder"/>
+        </entry>
+        <entry key="discoverable">
+            <bean class="org.dspace.ref.compliance.rules.factory.DiscoverableRuleBuilder" autowire-candidate="true"/>
+        </entry>
+        <entry key="countGreaterThan">
+            <bean class="org.dspace.ref.compliance.rules.factory.CountGreaterThanRuleBuilder"/>
+        </entry>
+        <entry key="dateRangeSmallerThanMonths">
+            <bean class="org.dspace.ref.compliance.rules.factory.DateRangeSmallerThanRuleBuilder"/>
+        </entry>
+        <entry key="dateSmallerThan">
+            <bean class="org.dspace.ref.compliance.rules.factory.DateSmallerThanRuleBuilder"/>
+        </entry>
+        <entry key="dateGreaterThanOrEqual">
+            <bean class="org.dspace.ref.compliance.rules.factory.DateGreaterThanOrEqualRuleBuilder"/>
+        </entry>
+        <entry key="atLeastOneNotBlank">
+            <bean class="org.dspace.ref.compliance.rules.factory.AtLeastOneNotBlankRuleBuilder"/>
+        </entry>
+    </util:map>
+
+    <bean id="DateOfFirstComplianceChecker" class="org.dspace.ref.compliance.rules.complianceupdaters.FirstComplianceDepositCheckerUseDateValue">
+        <property name="metadata" value="refterms.dateFCD"/>
+        <property name="compliantField" value="rioxxterms.version"/>
+        <property name="compliantValues" ref="compliantValues"/>
+    </bean>
+
+    <bean id="VerionOfFirstComplianceChecker" class="org.dspace.ref.compliance.rules.complianceupdaters.FirstComplianceDepositCheckerUseCopiedValue">
+        <property name="metadata" value="refterms.versionFCD"/>
+        <property name="compliantField" value="rioxxterms.version"/>
+        <property name="compliantValues" ref="compliantValues"/>
+    </bean>
+
+    <util:set id="compliantValues" value-type="java.lang.String">
+        <value>AM</value>
+        <value>P</value>
+        <value>VoR</value>
+        <value>CVoR</value>
+        <value>EVoR</value>
+    </util:set>
+
+    <!--a temporary value is added to these fields if they are empty during validation-->
+    <util:map id="fakeIfEmptyDuringValidation" value-type="java.lang.String">
+        <entry key="refterms.dateFOA" value="embargoOrNow"/>
+    </util:map>
+
+    <util:map id="fakeIfEmptyDuringUnarchivedValidation" value-type="java.lang.String">
+        <entry key="refterms.dateFCD" value="now"/>
+        <entry key="refterms.versionFCD" value="rioxxterms.version"/>
+    </util:map>
+
+
+</beans>

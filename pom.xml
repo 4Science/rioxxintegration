@@ -1,0 +1,241 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>it.4science.dspace</groupId>
+	<artifactId>rioxxintegration</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<organization>
+		<url>http://www.4science.it/en/</url>
+		<name>4Science</name>
+	</organization>
+	<packaging>pom</packaging>
+	<name>4Science Ref and Rioxx Patch</name>
+
+	<scm>
+		<connection>scm:git:https://github.com/4Science/DSpace-RefRioxx.git</connection>
+		<developerConnection>scm:git:https://github.com/4Science/DSpace-RefRioxx.git</developerConnection>
+		<url>https://github.com/4Science/DSpace-RefRioxx.git</url>
+		<tag>1.0</tag>
+	</scm>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<dspace.version>[5.11-SNAPSHOT,6.0-rc1-SNAPSHOT)</dspace.version>
+		<!-- 'root.basedir' is the path to the root [src] dir. It must be redefined 
+			by each child POM, as it is used to reference the LICENSE_HEADER and *.properties 
+			file(s) in that directory. -->
+		<root.basedir>${basedir}</root.basedir>
+	</properties>
+
+	<distributionManagement>
+		<repository>
+			<id>4science-nexus</id>
+			<name>4Science Public Releases</name>
+			<url>https://nexus.4science.it/repository/maven-releases/</url>
+		</repository>
+		<snapshotRepository>
+			<id>4science-snapshot</id>
+			<name>4Science Public Snapshot</name>
+			<url>https://nexus.4science.it/repository/maven-snapshots/</url>
+		</snapshotRepository>
+		<site>
+			<id>website</id>
+			<url>https://github.com/4Science/DSpace-RefRioxx/wiki</url>
+		</site>
+	</distributionManagement>
+
+	<repositories>
+		<repository>
+			<id>4science-repo-nexus</id>
+			<name>4Science Maven Repository</name>
+			<url>https://nexus.4science.it/repository/maven-public/</url>
+		</repository>
+	</repositories>
+
+	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>com.mycila</groupId>
+					<artifactId>license-maven-plugin</artifactId>
+					<version>2.6</version>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.1</version>
+				<configuration>
+					<source>1.7</source>
+					<target>1.7</target>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-release-plugin</artifactId>
+				<version>2.5.2</version>
+				<configuration>
+					<!-- During release:perform, enable the "release" profile (see below) -->
+					<releaseProfiles>release</releaseProfiles>
+					<goals>deploy</goals>
+					<!-- Suggest tagging the release in SCM as "dspace-[version]" -->
+					<tagNameFormat>@{project.version}</tagNameFormat>
+					<!-- Auto-Version all modules the same as the parent module -->
+					<autoVersionSubmodules>true</autoVersionSubmodules>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>com.mycila</groupId>
+				<artifactId>license-maven-plugin</artifactId>
+				<configuration>
+					<!-- License header file (can be a URL, but that's less stable if external 
+						site is down on occasion) -->
+					<header>${root.basedir}/LICENSE_HEADER</header>
+					<!--Just check headers of everything in the /src directory -->
+					<includes>
+						<include>src/**</include>
+					</includes>
+					<!--Use all default exclusions for IDE files & Maven files, see: http://code.google.com/p/maven-license-plugin/wiki/Configuration#Default_excludes -->
+					<useDefaultExcludes>true</useDefaultExcludes>
+					<!-- Add some default DSpace exclusions not covered by <useDefaultExcludes> 
+						Individual Maven projects may choose to override these defaults. -->
+					<excludes>
+						<exclude>**/src/test/resources/**</exclude>
+						<exclude>**/src/test/data/**</exclude>
+						<exclude>**/src/main/license/**</exclude>
+						<exclude>**/testEnvironment.properties</exclude>
+						<exclude>**/META-INF/**</exclude>
+						<exclude>**/*.LICENSE</exclude>
+						<exclude>**/LICENSE*</exclude>
+						<exclude>**/README*</exclude>
+						<exclude>**/readme*</exclude>
+						<exclude>**/.gitignore</exclude>
+						<exclude>**/rebel.xml</exclude>
+					</excludes>
+					<mapping>
+						<!-- Custom DSpace file extensions which are not recognized by maven-release-plugin: 
+							*.xmap, *.xslt, *.wsdd, *.wsdl, *.ttl, *.LICENSE -->
+						<xmap>XML_STYLE</xmap>
+						<xslt>XML_STYLE</xslt>
+						<wsdd>XML_STYLE</wsdd>
+						<wsdl>XML_STYLE</wsdl>
+						<ttl>SCRIPT_STYLE</ttl>
+						<LICENSE>TEXT</LICENSE>
+					</mapping>
+					<encoding>UTF-8</encoding>
+					<!-- maven-license-plugin recommends a strict check (e.g. check spaces/tabs 
+						too) -->
+					<strictCheck>true</strictCheck>
+				</configuration>
+				<executions>
+					<execution>
+						<id>check-headers</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+	<profiles>
+		<!-- The 'release' profile is used by the 'maven-release-plugin' (see above) -->
+		<profile>
+			<id>release</id>
+			<activation>
+				<activeByDefault>false</activeByDefault>
+			</activation>
+			<modules>
+				<module>rioxxintegration-api</module>
+			</modules>
+		</profile>
+	</profiles>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.dspace</groupId>
+				<artifactId>dspace-api</artifactId>
+				<version>${dspace.version}</version>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.dspace</groupId>
+				<artifactId>dspace-services</artifactId>
+				<version>${dspace.version}</version>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+			    <groupId>org.dspace</groupId>
+			    <artifactId>dspace-oai</artifactId>
+			    <classifier>classes</classifier>
+				<version>${dspace.version}</version>			    
+			    <scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.dspace</groupId>
+				<artifactId>dspace-xmlui</artifactId>
+				<type>jar</type>
+				<classifier>classes</classifier>
+				<version>${dspace.version}</version>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>javax.servlet</groupId>
+				<artifactId>javax.servlet-api</artifactId>
+				<version>3.0.1</version>
+			</dependency>
+			<dependency>
+				<groupId>org.mitre.dsmiley.httpproxy</groupId>
+				<artifactId>smiley-http-proxy-servlet</artifactId>
+				<type>jar</type>
+				<version>1.8</version>
+			</dependency>
+			<dependency>
+				<groupId>it.4science.dspace</groupId>
+				<artifactId>rioxxintegration-api</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>log4j</groupId>
+				<artifactId>log4j</artifactId>
+				<version>1.2.17</version>
+			</dependency>
+			<dependency>
+				<artifactId>spring-webmvc</artifactId>
+				<groupId>org.springframework</groupId>
+				<version>3.1.1.RELEASE</version>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>commons-lang</groupId>
+				<artifactId>commons-lang</artifactId>
+				<version>2.6</version>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.httpcomponents</groupId>
+				<artifactId>httpcore</artifactId>
+				<version>4.3.2</version>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.httpcomponents</groupId>
+				<artifactId>httpclient</artifactId>
+				<version>4.3.5</version>
+				<scope>provided</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
+	<modules>
+		<module>rioxxintegration-api</module>
+		<module>rioxxintegration-xmlui</module>
+	</modules>
+</project>
+
