@@ -6,8 +6,13 @@
     <version>0.0.1-SNAPSHOT</version>
   </parent>
   <artifactId>rioxxintegration-sword</artifactId>
+  <name>4Science Ref and Rioxx SWORD</name>
   
-  
+	<properties>
+		<!-- This is the path to the root [dspace-src] directory. -->
+		<root.basedir>${basedir}/..</root.basedir>
+	</properties>
+	  
    <dependencies>
 
       <!-- DSpace Custom SWORDv2 Web application -->

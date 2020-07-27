@@ -196,15 +196,6 @@
 				<version>${dspace.version}</version>
 				<scope>provided</scope>
 			</dependency>
-			<!-- DSpace XMLUI Languages -->
-			<dependency>
-				<groupId>org.dspace</groupId>
-				<artifactId>dspace-xmlui-lang</artifactId>
-				<type>war</type>
-				<version>${dspace.version}</version>
-				<scope>provided</scope>
-			</dependency>
-
 			<!-- DSpace XMLUI Webapp -->
 			<dependency>
 				<groupId>org.dspace</groupId>
@@ -247,6 +238,11 @@
 				<classifier>classes</classifier>
 				<version>${project.version}</version>
 			</dependency>
+			<dependency>
+				<groupId>it.4science.dspace</groupId>
+				<artifactId>rioxxintegration-sword</artifactId>
+				<version>${project.version}</version>
+			</dependency>			
 		</dependencies>
 	</dependencyManagement>
 

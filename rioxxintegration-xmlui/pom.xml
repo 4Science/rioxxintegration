@@ -61,13 +61,6 @@
 			<scope>provided</scope>
 		</dependency>
 
-		<!-- DSpace XMLUI Languages -->
-		<dependency>
-			<groupId>org.dspace</groupId>
-			<artifactId>dspace-xmlui-lang</artifactId>
-			<type>war</type>
-		</dependency>
-
 		<!-- DSpace XMLUI Webapp -->
 		<dependency>
 			<groupId>org.dspace</groupId>
