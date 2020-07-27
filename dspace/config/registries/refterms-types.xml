@@ -1,0 +1,97 @@
+<dspace-dc-types>
+
+    <dspace-header>
+        <title>REFterms Types Registry</title>
+    </dspace-header>
+
+    <dc-schema>
+        <name>refterms</name>
+        <namespace>http://www.dspace.org/refterms</namespace>
+    </dc-schema>
+
+    <dc-type>
+        <schema>refterms</schema>
+        <element>technicalException</element>
+        <!-- unqualified -->
+        <scope_note></scope_note>
+    </dc-type>
+
+    <dc-type>
+        <schema>refterms</schema>
+        <element>technicalExceptionExplanation</element>
+        <!-- unqualified -->
+        <scope_note></scope_note>
+    </dc-type>
+
+    <dc-type>
+        <schema>refterms</schema>
+        <element>dateFCD</element>
+        <!-- unqualified -->
+        <scope_note></scope_note>
+    </dc-type>
+
+    <dc-type>
+        <schema>refterms</schema>
+        <element>versionFCD</element>
+        <!-- unqualified -->
+        <scope_note></scope_note>
+    </dc-type>
+
+    <dc-type>
+        <schema>refterms</schema>
+        <element>dateFOA</element>
+        <!-- unqualified -->
+        <scope_note></scope_note>
+    </dc-type>
+
+    <dc-type>
+        <schema>refterms</schema>
+        <element>panel</element>
+        <!-- unqualified -->
+        <scope_note></scope_note>
+    </dc-type>
+
+    <dc-type>
+        <schema>refterms</schema>
+        <element>depositException</element>
+        <!-- unqualified -->
+        <scope_note></scope_note>
+    </dc-type>
+
+    <dc-type>
+        <schema>refterms</schema>
+        <element>depositExceptionExplanation</element>
+        <!-- unqualified -->
+        <scope_note></scope_note>
+    </dc-type>
+
+    <dc-type>
+        <schema>refterms</schema>
+        <element>accessException</element>
+        <!-- unqualified -->
+        <scope_note></scope_note>
+    </dc-type>
+
+    <dc-type>
+        <schema>refterms</schema>
+        <element>accessExceptionExplanation</element>
+        <!-- unqualified -->
+        <scope_note></scope_note>
+    </dc-type>
+
+    <dc-type>
+        <schema>refterms</schema>
+        <element>exceptionFreeText</element>
+        <!-- unqualified -->
+        <scope_note></scope_note>
+    </dc-type>
+
+    <dc-type>
+        <schema>refterms</schema>
+        <element>dateFirstOnline</element>
+        <!-- unqualified -->
+        <scope_note></scope_note>
+    </dc-type>
+
+
+</dspace-dc-types>

@@ -152,6 +152,8 @@
 			</activation>
 			<modules>
 				<module>rioxxintegration-api</module>
+				<module>rioxxintegration-xmlui</module>
+				<module>rioxxintegration-sword</module>
 			</modules>
 		</profile>
 	</profiles>
@@ -171,12 +173,48 @@
 				<scope>provided</scope>
 			</dependency>
 			<dependency>
-			    <groupId>org.dspace</groupId>
-			    <artifactId>dspace-oai</artifactId>
-			    <classifier>classes</classifier>
-				<version>${dspace.version}</version>			    
-			    <scope>provided</scope>
+				<groupId>org.dspace</groupId>
+				<artifactId>dspace-oai</artifactId>
+				<classifier>classes</classifier>
+				<version>${dspace.version}</version>
+				<scope>provided</scope>
 			</dependency>
+			<!-- DSpace Custom SWORDv2 Web application -->
+			<dependency>
+				<groupId>org.dspace</groupId>
+				<artifactId>dspace-swordv2</artifactId>
+				<type>war</type>
+				<version>${dspace.version}</version>
+				<scope>provided</scope>
+			</dependency>
+			<!-- DSpace Implementation of SWORDv2 Provider -->
+			<dependency>
+				<groupId>org.dspace</groupId>
+				<artifactId>dspace-swordv2</artifactId>
+				<type>jar</type>
+				<classifier>classes</classifier>
+				<version>${dspace.version}</version>
+				<scope>provided</scope>
+			</dependency>
+			<!-- DSpace XMLUI Languages -->
+			<dependency>
+				<groupId>org.dspace</groupId>
+				<artifactId>dspace-xmlui-lang</artifactId>
+				<type>war</type>
+				<version>${dspace.version}</version>
+				<scope>provided</scope>
+			</dependency>
+
+			<!-- DSpace XMLUI Webapp -->
+			<dependency>
+				<groupId>org.dspace</groupId>
+				<artifactId>dspace-xmlui</artifactId>
+				<type>war</type>
+				<version>${dspace.version}</version>
+				<scope>provided</scope>
+			</dependency>
+
+			<!-- DSpace XMLUI API -->
 			<dependency>
 				<groupId>org.dspace</groupId>
 				<artifactId>dspace-xmlui</artifactId>
@@ -185,16 +223,11 @@
 				<version>${dspace.version}</version>
 				<scope>provided</scope>
 			</dependency>
+
 			<dependency>
 				<groupId>javax.servlet</groupId>
-				<artifactId>javax.servlet-api</artifactId>
-				<version>3.0.1</version>
-			</dependency>
-			<dependency>
-				<groupId>org.mitre.dsmiley.httpproxy</groupId>
-				<artifactId>smiley-http-proxy-servlet</artifactId>
-				<type>jar</type>
-				<version>1.8</version>
+				<artifactId>servlet-api</artifactId>
+				<scope>provided</scope>
 			</dependency>
 			<dependency>
 				<groupId>it.4science.dspace</groupId>
@@ -202,33 +235,17 @@
 				<version>${project.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>log4j</groupId>
-				<artifactId>log4j</artifactId>
-				<version>1.2.17</version>
+				<groupId>it.4science.dspace</groupId>
+				<artifactId>rioxxintegration-xmlui</artifactId>
+				<type>war</type>
+				<version>${project.version}</version>
 			</dependency>
 			<dependency>
-				<artifactId>spring-webmvc</artifactId>
-				<groupId>org.springframework</groupId>
-				<version>3.1.1.RELEASE</version>
-				<scope>provided</scope>
-			</dependency>
-			<dependency>
-				<groupId>commons-lang</groupId>
-				<artifactId>commons-lang</artifactId>
-				<version>2.6</version>
-				<scope>provided</scope>
-			</dependency>
-			<dependency>
-				<groupId>org.apache.httpcomponents</groupId>
-				<artifactId>httpcore</artifactId>
-				<version>4.3.2</version>
-				<scope>provided</scope>
-			</dependency>
-			<dependency>
-				<groupId>org.apache.httpcomponents</groupId>
-				<artifactId>httpclient</artifactId>
-				<version>4.3.5</version>
-				<scope>provided</scope>
+				<groupId>it.4science.dspace</groupId>
+				<artifactId>rioxxintegration-xmlui</artifactId>
+				<type>jar</type>
+				<classifier>classes</classifier>
+				<version>${project.version}</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
@@ -236,6 +253,7 @@
 	<modules>
 		<module>rioxxintegration-api</module>
 		<module>rioxxintegration-xmlui</module>
+		<module>rioxxintegration-sword</module>
 	</modules>
 </project>
 

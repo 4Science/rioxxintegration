@@ -1,0 +1,29 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>it.4science.dspace</groupId>
+    <artifactId>rioxxintegration</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+  </parent>
+  <artifactId>rioxxintegration-sword</artifactId>
+  
+  
+   <dependencies>
+
+      <!-- DSpace Custom SWORDv2 Web application -->
+      <dependency>
+        <groupId>org.dspace</groupId>
+        <artifactId>dspace-swordv2</artifactId>
+        <type>war</type>
+      </dependency>
+
+      <!-- DSpace Implementation of SWORDv2 Provider -->
+      <dependency>
+        <groupId>org.dspace</groupId>
+        <artifactId>dspace-swordv2</artifactId>
+        <type>jar</type>
+        <classifier>classes</classifier>
+      </dependency>
+
+   </dependencies>
+</project>

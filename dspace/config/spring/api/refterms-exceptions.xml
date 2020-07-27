@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright (c) 2002-2010, DuraSpace.  All rights reserved
+    Licensed under the DuraSpace License.
+
+    A copy of the DuraSpace License has been included in this
+    distribution and is available at: http://www.dspace.org/license
+
+-->
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans.xsd
+           http://www.springframework.org/schema/context
+           http://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
+
+    <context:annotation-config/>
+
+    <util:list id="configuredExceptions">
+        <value>depositException</value>
+        <value>accessException</value>
+        <value>technicalException</value>
+        <value>exceptionFreeText</value>
+    </util:list>
+
+    <!--START TECHNICAL EXCEPTION CONFIG -->
+    <util:map id="refterms-technicalException" map-class="java.util.HashMap" value-type="com.atmire.ref.compliance.submission.ExceptionInformation" key-type="java.lang.String">
+        <entry key="conferenceOutsideDefinition" value-ref="conferenceOutsideDefinition"/>
+        <entry key="differentUKHEI" value-ref="differentUKHEI"/>
+        <entry key="technicalFailure" value-ref="technicalFailure"/>
+        <entry key="externalServiceProvider" value-ref="externalServiceProvider"/>
+    </util:map>
+
+    <!-- TechnicalException specific fields-->
+    <bean id="conferenceOutsideDefinition" class="com.atmire.ref.compliance.submission.ExceptionInformation">
+        <property name="exceptionSubField" value="Output is a conference proceeding, but not within definition (i.e., it does not have an ISSN, or the proceedings are published as part of book series)"/>
+        <property name="helpText" value="Please explain why the publication has no ISSN identifier."/>
+    </bean>
+    <bean id="differentUKHEI" class="com.atmire.ref.compliance.submission.ExceptionInformation">
+        <property name="exceptionSubField" value="At the point of acceptance, the individual whose output is being submitted to the REF was at a different UK HEI which failed to comply with the criteria."/>
+        <property name="helpText" value="Please provide evidence that the researcher was not employed by submitting HEI at the point of acceptance, if available. This might include ‘acceptance date’ as sometimes given on published version."/>
+    </bean>
+    <bean id="technicalFailure" class="com.atmire.ref.compliance.submission.ExceptionInformation">
+        <property name="exceptionSubField" value="The repository experienced a short term or transient technical failure that prevented compliance with the criteria (this should not apply to systemic issues)"/>
+        <property name="helpText" value="Please provide a reasonable and descriptive explanation of the technical failure."/>
+    </bean>
+    <bean id="externalServiceProvider" class="com.atmire.ref.compliance.submission.ExceptionInformation">
+        <property name="exceptionSubField" value="An external service provider failure prevented compliance (for instance, a subject repository did not enable open access at the end of the embargo period, or a subject repository ceased to operate)."/>
+        <property name="helpText" value="Please provide a reasonable and descriptive explanation of the external service failure."/>
+    </bean>
+    <!--STOP TECHNICAL EXCEPTION CONFIG -->
+
+
+    <!--START DEPOSIT EXCEPTION CONFIG -->
+   <util:map id="refterms-depositException" map-class="java.util.HashMap" value-type="com.atmire.ref.compliance.submission.ExceptionInformation" key-type="java.lang.String">
+        <entry key="noRepositoryAtAcceptance" value-ref="noRepositoryAtAcceptance"/>
+        <entry key="delaySecuringText" value-ref="delaySecuringText"/>
+        <entry key="notEmployedAtUKHEI" value-ref="notEmployedAtUKHEI"/>
+        <entry key="unlawfulDeposit" value-ref="unlawfulDeposit"/>
+        <entry key="securityRisk" value-ref="securityRisk"/>
+        <entry key="publishedGoldOA" value-ref="publishedGoldOA"/>
+    </util:map>
+
+    <!-- DepositException specific fields-->
+    <bean id="noRepositoryAtAcceptance" class="com.atmire.ref.compliance.submission.ExceptionInformation">
+        <property name="exceptionSubField" value="The individual whose output is being submitted to the REF was unable to secure the use of a repository at the point of acceptance"/>
+        <property name="helpText" value="Please provide a descriptive explanation of the situation, including of any difficulties encountered. This can include equality and diversity issues or difficulties arising from complex staff circumstances with respect for the individuals privacy."/>
+    </bean>
+    <bean id="delaySecuringText" class="com.atmire.ref.compliance.submission.ExceptionInformation">
+        <property name="exceptionSubField" value="The individual whose output is being submitted to the REF experienced a delay in securing the final peer-reviewed text (for instance, where a paper has multiple authors)."/>
+        <property name="helpText" value="Please provide a descriptive explanation of difficulties encountered. This can include equality and diversity issues or difficulties arising from complex staff circumstances with respect for the individuals privacy."/>
+    </bean>
+    <bean id="notEmployedAtUKHEI" class="com.atmire.ref.compliance.submission.ExceptionInformation">
+        <property name="exceptionSubField" value="The individual whose output is being submitted to the REF was not employed by a UK HEI at the time of submission for publication."/>
+        <property name="helpText" value="Please provide evidence of date of submission of article if available (this might include ‘submitted date’ as sometimes given on published version), and evidence that individual was not employed by submitting HEI at that point."/>
+    </bean>
+    <bean id="unlawfulDeposit" class="com.atmire.ref.compliance.submission.ExceptionInformation">
+        <property name="exceptionSubField" value="It would be unlawful to deposit, or request the deposit of, the output."/>
+        <property name="helpText" value="Please provide a reasonable and descriptive explanation of the difficulties encountered (where lawful to collect and record)."/>
+    </bean>
+    <bean id="securityRisk" class="com.atmire.ref.compliance.submission.ExceptionInformation">
+        <property name="exceptionSubField" value="Depositing the output would present a security risk."/>
+        <property name="helpText" value="Please provide a reasonable and descriptive explanation of the difficulties encountered (where safe to collect and record)."/>
+    </bean>
+    <bean id="publishedGoldOA" class="com.atmire.ref.compliance.submission.ExceptionInformation">
+        <property name="exceptionSubField" value="The output was published as ‘gold’ open access (e.g. RCUK-funded projects where an open access article processing charge has been paid)"/>
+        <property name="helpText" value="Please provide evidence that the output is available openly on publisher website (e.g. by providing a URL)."/>
+    </bean>
+    <!--STOP DEPOSIT EXCEPTION CONFIG -->
+
+
+    <!--START ACCESS EXCEPTION CONFIG -->
+   <util:map id="refterms-accessException" map-class="java.util.HashMap" value-type="com.atmire.ref.compliance.submission.ExceptionInformation" key-type="java.lang.String">
+        <entry key="thirdPartyRights" value-ref="thirdPartyRights"/>
+        <entry key="publicationExceedsMaxEmbargo" value-ref="publicationExceedsMaxEmbargo"/>
+        <entry key="publicationDisallowsOA" value-ref="publicationDisallowsOA"/>
+    </util:map>
+    <!-- AccessException specific fields-->
+    <bean id="thirdPartyRights" class="com.atmire.ref.compliance.submission.ExceptionInformation">
+        <property name="exceptionSubField" value="The output depends on the reproduction of third party content for which open access rights could not be granted (either within the specified timescales, or at all)"/>
+        <property name="helpText" value="Where it is not obvious that the output depends on third-party material, a descriptive explanation of the exact difficulties encountered is required."/>
+    </bean>
+    <bean id="publicationExceedsMaxEmbargo" class="com.atmire.ref.compliance.submission.ExceptionInformation">
+        <property name="exceptionSubField" value="The publication concerned requires an embargo period that exceeds the stated maxima, and was the most appropriate publication for the output."/>
+        <property name="helpText" value="Please provide evidence that your institution has a process in place to allow the author or the institution to examine and consider the range of venues that allowed deposit within the rules."/>
+    </bean>
+    <bean id="publicationDisallowsOA" class="com.atmire.ref.compliance.submission.ExceptionInformation">
+        <property name="exceptionSubField" value="The publication concerned actively disallows open-access deposit in a repository, and was the most appropriate publication for the output."/>
+        <property name="helpText" value="Please provide evidence that your institution has a process in place to allow the author or the institution to examine and consider the range of venues that allowed deposit within the rules."/>
+    </bean>
+
+    <!--STOP ACCESS EXCEPTION CONFIG -->
+
+</beans>
+

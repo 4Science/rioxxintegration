@@ -14,12 +14,12 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>war</packaging>
 	<name>4Science Ref and Rioxx XMLUI</name>
-	
-    <properties>
-        <!-- This is the path to the root [dspace-src] directory. -->
-        <root.basedir>${basedir}/..</root.basedir>
-    </properties>
-    
+
+	<properties>
+		<!-- This is the path to the root [dspace-src] directory. -->
+		<root.basedir>${basedir}/..</root.basedir>
+	</properties>
+
 	<build>
 		<finalName>rioxxintegration-xmlui</finalName>
 		<plugins>
@@ -50,21 +50,41 @@
 				</executions>
 			</plugin>
 		</plugins>
-	</build>	
-	
+	</build>
+
 	<dependencies>
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>3.8.1</version>
-			<scope>test</scope>
-		</dependency>
 		<dependency>
 			<groupId>org.dspace</groupId>
 			<artifactId>dspace-xmlui</artifactId>
 			<type>jar</type>
 			<classifier>classes</classifier>
 			<scope>provided</scope>
+		</dependency>
+
+		<!-- DSpace XMLUI Languages -->
+		<dependency>
+			<groupId>org.dspace</groupId>
+			<artifactId>dspace-xmlui-lang</artifactId>
+			<type>war</type>
+		</dependency>
+
+		<!-- DSpace XMLUI Webapp -->
+		<dependency>
+			<groupId>org.dspace</groupId>
+			<artifactId>dspace-xmlui</artifactId>
+			<type>war</type>
+		</dependency>
+
+		<!-- DSpace XMLUI API -->
+		<dependency>
+			<groupId>org.dspace</groupId>
+			<artifactId>dspace-xmlui</artifactId>
+			<type>jar</type>
+			<classifier>classes</classifier>
+		</dependency>
+		<dependency>
+			<groupId>it.4science.dspace</groupId>
+			<artifactId>rioxxintegration-api</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>javax.servlet</groupId>
