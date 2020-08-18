@@ -1,0 +1,98 @@
+<!--
+
+    The contents of this file are subject to the license and copyright
+    detailed in the LICENSE and NOTICE files at the root of the source
+    tree and available online at
+
+    http://www.dspace.org/license/
+
+-->
+<dspace-dc-types>
+
+    <dspace-header>
+        <title>RIOXXTerms Types Registry</title>
+    </dspace-header>
+
+    <dc-schema>
+        <name>rioxxterms</name>
+        <namespace>http://www.dspace.org/rioxxterms</namespace>
+    </dc-schema>
+
+    <dc-type>
+        <schema>rioxxterms</schema>
+        <element>funder</element>
+        <!-- unqualified -->
+        <scope_note></scope_note>
+    </dc-type>
+
+    <dc-type>
+        <schema>rioxxterms</schema>
+        <element>identifier</element>
+        <qualifier>project</qualifier>
+        <scope_note></scope_note>
+    </dc-type>
+
+    <dc-type>
+        <schema>rioxxterms</schema>
+        <element>apc</element>
+        <!-- unqualified -->
+        <scope_note></scope_note>
+    </dc-type>
+
+    <dc-type>
+        <schema>rioxxterms</schema>
+        <element>version</element>
+        <!-- unqualified -->
+        <scope_note></scope_note>
+    </dc-type>
+
+
+    <dc-type>
+        <schema>rioxxterms</schema>
+        <element>versionofrecord</element>
+        <!-- unqualified -->
+        <scope_note></scope_note>
+    </dc-type>
+
+    <dc-type>
+        <schema>rioxxterms</schema>
+        <element>licenseref</element>
+        <qualifier>uri</qualifier>
+        <scope_note></scope_note>
+    </dc-type>
+
+    <dc-type>
+        <schema>rioxxterms</schema>
+        <element>licenseref</element>
+        <qualifier>startdate</qualifier>
+        <scope_note></scope_note>
+    </dc-type>
+
+    <dc-type>
+        <schema>rioxxterms</schema>
+        <element>type</element>
+        <!-- unqualified -->
+        <scope_note></scope_note>
+    </dc-type>
+
+    <dc-type>
+        <schema>rioxxterms</schema>
+        <element>project</element>
+        <!-- unqualified -->
+        <scope_note></scope_note>
+    </dc-type>
+
+    <dc-type>
+        <schema>rioxxterms</schema>
+        <element>openaccess</element>
+        <qualifier>uri</qualifier>
+        <scope_note>URL to the full text publication</scope_note>
+    </dc-type>
+
+    <dc-type>
+        <schema>rioxxterms</schema>
+        <element>newfunderprojectpair</element>
+        <scope_note></scope_note>
+    </dc-type>
+
+</dspace-dc-types>
