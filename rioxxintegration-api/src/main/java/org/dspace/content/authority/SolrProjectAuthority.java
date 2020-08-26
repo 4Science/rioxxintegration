@@ -1,11 +1,8 @@
-/**
- * The contents of this file are subject to the license and copyright
- * detailed in the LICENSE and NOTICE files at the root of the source
- * tree and available online at
- *
- * http://www.dspace.org/license/
- */
 package org.dspace.content.authority;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -17,11 +14,9 @@ import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.params.CommonParams;
 import org.dspace.authority.AuthoritySearchService;
 import org.dspace.authority.AuthorityValue;
-import org.dspace.utils.DSpace;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import org.dspace.authority.factory.AuthorityServiceFactory;
+import org.dspace.authority.service.AuthorityValueService;
+import org.dspace.content.Collection;
 
 /**
  * Created by Philip Vissenaekens (philip at atmire dot com)
@@ -29,9 +24,13 @@ import java.util.Map;
  * Time: 11:19
  */
 public class SolrProjectAuthority implements ChoiceAuthority  {
-    private static final Logger log = Logger.getLogger(SolrProjectAuthority.class);
-
-    public Choices getMatches(String field, String text, int collection, int start, int limit, String locale, boolean bestMatch) {
+    
+	private static final Logger log = Logger.getLogger(SolrProjectAuthority.class);
+    
+    protected AuthorityValueService authorityValueService;
+    protected AuthoritySearchService authoritySearchService;
+    
+    public Choices getMatches(String field, String text, Collection collection, int start, int limit, String locale, boolean bestMatch) {
         if(limit == 0)
             limit = 10;
 
@@ -78,7 +77,7 @@ public class SolrProjectAuthority implements ChoiceAuthority  {
         try {
             int max = 0;
             boolean hasMore = false;
-            QueryResponse searchResponse = getSearchService().search(queryArgs);
+            QueryResponse searchResponse = getAuthoritySearchService().search(queryArgs);
             SolrDocumentList authDocs = searchResponse.getResults();
             ArrayList<Choice> choices = new ArrayList<Choice>();
             if (authDocs != null) {
@@ -90,7 +89,7 @@ public class SolrProjectAuthority implements ChoiceAuthority  {
                 for (int i = 0; i < maxDocs; i++) {
                     SolrDocument solrDocument = authDocs.get(i);
                     if (solrDocument != null) {
-                        AuthorityValue val = AuthorityValue.fromSolr(solrDocument);
+                        AuthorityValue val = getAuthorityValueService().fromSolr(solrDocument);
 
                         Map<String, String> extras = val.choiceSelectMap();
                         extras.put("insolr", val.getId());
@@ -127,18 +126,19 @@ public class SolrProjectAuthority implements ChoiceAuthority  {
     }
 
     @Override
-    public Choices getMatches(String field, String text, int collection, int start, int limit, String locale) {
+    public Choices getMatches(String field, String text, Collection collection, int start, int limit, String locale) {
         return getMatches(field, text, collection, start, limit, locale, true);
     }
 
     @Override
-    public Choices getBestMatch(String field, String text, int collection, String locale) {
+    public Choices getBestMatch(String field, String text, Collection collection, String locale) {
         Choices matches = getMatches(field, text, collection, 0, 1, locale, false);
         if (matches.values.length !=0 && !matches.values[0].value.equalsIgnoreCase(text)) {
             matches = new Choices(false);
         }
         return matches;
     }
+
 
     @Override
     public String getLabel(String field, String key, String locale) {
@@ -149,7 +149,7 @@ public class SolrProjectAuthority implements ChoiceAuthority  {
             SolrQuery queryArgs = new SolrQuery();
             queryArgs.setQuery("id:" + ClientUtils.escapeQueryChars(key));
             queryArgs.setRows(1);
-            QueryResponse searchResponse = getSearchService().search(queryArgs);
+            QueryResponse searchResponse = getAuthoritySearchService().search(queryArgs);
             SolrDocumentList docs = searchResponse.getResults();
             if (docs.getNumFound() == 1) {
                 String label = null;
@@ -194,11 +194,21 @@ public class SolrProjectAuthority implements ChoiceAuthority  {
         return key;
     }
 
-    public static AuthoritySearchService getSearchService() {
-        DSpace dspace = new DSpace();
+	public AuthorityValueService getAuthorityValueService() {
+		if(authorityValueService == null) {
+			authorityValueService = AuthorityServiceFactory.getInstance().getAuthorityValueService();
+		}
+		return authorityValueService;
+	}
 
-        org.dspace.kernel.ServiceManager manager = dspace.getServiceManager();
+	public void setAuthorityValueService(AuthorityValueService authorityValueService) {
+		this.authorityValueService = authorityValueService;
+	}
 
-        return manager.getServiceByName(AuthoritySearchService.class.getName(), AuthoritySearchService.class);
-    }
+	public AuthoritySearchService getAuthoritySearchService() {
+		if(authoritySearchService == null) {
+			authoritySearchService = AuthorityServiceFactory.getInstance().getAuthoritySearchService();
+		}
+		return authoritySearchService;
+	}
 }

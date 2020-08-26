@@ -1,10 +1,3 @@
-/**
- * The contents of this file are subject to the license and copyright
- * detailed in the LICENSE and NOTICE files at the root of the source
- * tree and available online at
- *
- * http://www.dspace.org/license/
- */
 package org.dspace.ref.compliance.rules;
 
 import java.util.*;
@@ -28,7 +21,7 @@ public class DateGreaterThanOrEqualRule extends AbstractFieldCheckRule implement
         thresholdValue = CollectionUtils.isEmpty(thresholdValues) ? null : thresholdValues.get(0);
     }
 
-    protected boolean checkFieldValues(final List<Metadatum> fieldValueList) {
+    protected boolean checkFieldValues(final List<String> fieldValueList) {
         boolean valid = false;
         if (isEmpty(fieldValueList)) {
             addViolationDescription("The %s field has no value", fieldDescription);
@@ -39,7 +32,7 @@ public class DateGreaterThanOrEqualRule extends AbstractFieldCheckRule implement
         } else {
             try {
                 DateTime thresholdDate = parseDateTime(thresholdValue.getValue());
-                DateTime dateToCheck = parseDateTime(fieldValueList.get(0).value);
+                DateTime dateToCheck = parseDateTime(fieldValueList.get(0));
 
                 if(dateToCheck == null) {
                     addViolationDescription("there is no valid value for the field " + metadataFieldToCheck);

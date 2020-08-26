@@ -1,10 +1,3 @@
-/**
- * The contents of this file are subject to the license and copyright
- * detailed in the LICENSE and NOTICE files at the root of the source
- * tree and available online at
- *
- * http://www.dspace.org/license/
- */
 package org.dspace.ref.compliance.workflow;
 
 import java.io.*;
@@ -32,12 +25,12 @@ public class RIOXXComplianceAction extends ProcessingAction {
             .getServiceByName("rioxxComplianceCheckService", ComplianceCheckService.class);
 
     @Override
-    public void activate(Context c, XmlWorkflowItem wf) throws SQLException, IOException, AuthorizeException, WorkflowException {
+    public void activate(Context c, XmlWorkflowItem wf) throws SQLException, IOException, AuthorizeException {
 
     }
 
     @Override
-    public ActionResult execute(Context c, XmlWorkflowItem wfi, Step step, HttpServletRequest request) throws SQLException, AuthorizeException, IOException, WorkflowException {
+    public ActionResult execute(Context c, XmlWorkflowItem wfi, Step step, HttpServletRequest request) throws SQLException, AuthorizeException, IOException {
         if(request.getParameter("submit_continue") != null && allowContinue(c, wfi)){
             return new ActionResult(ActionResult.TYPE.TYPE_OUTCOME, ActionResult.OUTCOME_COMPLETE);
         } else if (request.getParameter("submit_return") != null){

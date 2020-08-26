@@ -1,24 +1,21 @@
-/**
- * The contents of this file are subject to the license and copyright
- * detailed in the LICENSE and NOTICE files at the root of the source
- * tree and available online at
- *
- * http://www.dspace.org/license/
- */
 package org.dspace.app.xmlui.aspect.compliance;
 
-import java.io.*;
-import java.sql.*;
-import org.apache.cocoon.*;
-import org.dspace.app.xmlui.cocoon.*;
-import org.dspace.app.xmlui.utils.*;
-import org.dspace.app.xmlui.wing.*;
-import org.dspace.app.xmlui.wing.element.*;
-import org.dspace.authorize.*;
-import org.dspace.content.*;
+import java.io.IOException;
+import java.sql.SQLException;
+
+import org.apache.cocoon.ProcessingException;
+import org.dspace.app.xmlui.cocoon.AbstractDSpaceTransformer;
+import org.dspace.app.xmlui.utils.HandleUtil;
+import org.dspace.app.xmlui.wing.Message;
+import org.dspace.app.xmlui.wing.WingException;
+import org.dspace.app.xmlui.wing.element.Body;
+import org.dspace.app.xmlui.wing.element.Division;
+import org.dspace.app.xmlui.wing.element.PageMeta;
+import org.dspace.authorize.AuthorizeException;
+import org.dspace.content.DSpaceObject;
 import org.dspace.content.Item;
-import org.dspace.utils.*;
-import org.xml.sax.*;
+import org.dspace.utils.DSpace;
+import org.xml.sax.SAXException;
 
 /**
  * Created by Philip Vissenaekens (philip at atmire dot com)
@@ -53,7 +50,7 @@ public class REFItemComplianceMain extends AbstractDSpaceTransformer {
         DSpaceObject dso = HandleUtil.obtainHandle(objectModel);
 
         if(dso!=null && dso.getType() == org.dspace.core.Constants.ITEM) {
-            HandleUtil.buildHandleTrail(dso, pageMeta, contextPath);
+            HandleUtil.buildHandleTrail(context, dso, pageMeta, contextPath);
             pageMeta.addTrailLink(contextPath + "/handle/" + dso.getHandle(), T_item);
         }
 

@@ -7,25 +7,24 @@
  */
 package org.dspace.app.util;
 
-import com.atmire.submission.typebound.check.SubmissionStepConditionCheck;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.dspace.content.Bitstream;
 import org.dspace.content.Bundle;
 import org.dspace.content.InProgressSubmission;
-
 import org.dspace.submit.AbstractProcessingStep;
 import org.dspace.utils.DSpace;
 import org.dspace.workflow.WorkflowItem;
 import org.dspace.xmlworkflow.storedcomponents.XmlWorkflowItem;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Information about an item being editing with the submission UI
@@ -38,6 +37,8 @@ public class SubmissionInfo extends HashMap
     /** log4j logger */
     private static Logger log = Logger.getLogger(SubmissionInfo.class);
 
+    private final static ISubmissionStepConditionCheck conditionCheck = new DSpace().getServiceManager().getServiceByName("SubmissionStepConditionCheck",ISubmissionStepConditionCheck.class);
+    
     /** The item which is being submitted */
     private InProgressSubmission submissionItem = null;
 
@@ -494,7 +495,6 @@ public class SubmissionInfo extends HashMap
                 boolean typeBoundAndValid = true;
                 if(StringUtils.isNotBlank(currentStep.getTypeBindingConfig())){
                     String typeBindingConfig = currentStep.getTypeBindingConfig();
-                    SubmissionStepConditionCheck conditionCheck = new DSpace().getServiceManager().getServiceByName("SubmissionStepConditionCheck",SubmissionStepConditionCheck.class);
                     typeBoundAndValid= conditionCheck.allConditionsMet(subInfo.getSubmissionItem().getItem(), typeBindingConfig);
                 }
                 if (currentStep.isVisible() && typeBoundAndValid)

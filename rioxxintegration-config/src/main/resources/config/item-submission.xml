@@ -1,13 +1,4 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<!--
-
-    The contents of this file are subject to the license and copyright
-    detailed in the LICENSE and NOTICE files at the root of the source
-    tree and available online at
-
-    http://www.dspace.org/license/
-
--->
 <!DOCTYPE item-submission SYSTEM "item-submission.dtd">
 
 <!-- Configurable Submission configuration file  -->
@@ -207,10 +198,17 @@
 		<xmlui-binding>org.dspace.app.xmlui.aspect.submission.submit.InitialQuestionsStep</xmlui-binding>
 	    <workflow-editable>true</workflow-editable>
 	  </step> -->
-      
 
-
-      <!--Step 1 will be to Describe the item.-->
+       <!-- Find publications based on ID/DOI/Title/Author to pre-fill the submission. XMLUI ONLY.
+            For JSPUI version, see JSPUIStartSubmissionLookupStep under <step-definitions> above.
+       <step>
+           <heading>submit.progressbar.lookup</heading>
+           <processing-class>org.dspace.submit.step.XMLUIStartSubmissionLookupStep</processing-class>
+           <xmlui-binding>org.dspace.app.xmlui.aspect.submission.submit.StartSubmissionLookupStep</xmlui-binding>
+           <workflow-editable>true</workflow-editable>
+       </step>
+        -->
+      <!--Step 2 will be to Describe the item.-->
       <step>
         <heading>submit.progressbar.describe</heading>
         <processing-class>org.dspace.submit.step.DescribeStep</processing-class>

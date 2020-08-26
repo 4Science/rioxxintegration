@@ -1,15 +1,9 @@
-/**
- * The contents of this file are subject to the license and copyright
- * detailed in the LICENSE and NOTICE files at the root of the source
- * tree and available online at
- *
- * http://www.dspace.org/license/
- */
 package org.dspace.util.subclasses;
 
-import org.apache.commons.lang3.*;
-import org.dspace.content.*;
-import org.dspace.util.*;
+import org.apache.commons.lang3.StringUtils;
+import org.dspace.content.Item;
+
+import com.atmire.utils.Metadatum;
 
 /**
  * Created by: Antoine Snyers (antoine at atmire dot com)
@@ -17,33 +11,17 @@ import org.dspace.util.*;
  */
 public class Metadata extends Metadatum {
 
-    /**
-     * @param metadataFieldString schema.element.qualifier[language]::authority::confidence
-     */
-    public Metadata(String metadataFieldString, String value) {
-        this(MetadataFieldString.encapsulate(metadataFieldString), value);
-    }
-
-    public Metadata(Metadatum field, String value){
-        this(field.schema, field.element, field.qualifier, field.language, value, field.authority, field.confidence);
-    }
-
-    public Metadata(Metadatum dcValue) {
-        this(dcValue.schema, dcValue.element, dcValue.qualifier, dcValue.language, dcValue.value, dcValue.authority, dcValue.confidence);
-    }
-
+	public String language;
+	public String authority;
+	public String value;
+	public int confidence;
+	
     public Metadata(String schema, String element, String qualifier, String language, String value, String authority, int confidence) {
-        this.schema = schema;
-        this.element = element;
-        this.qualifier = qualifier;
+    	super(schema, element, qualifier);
         this.language = language;
         this.value = value;
         this.authority = authority;
         this.confidence = confidence;
-    }
-
-    public Metadata() {
-
     }
 
     public String getSchema() {

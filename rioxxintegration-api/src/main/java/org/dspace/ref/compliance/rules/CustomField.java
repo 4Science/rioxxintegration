@@ -1,117 +1,122 @@
-/**
- * The contents of this file are subject to the license and copyright
- * detailed in the LICENSE and NOTICE files at the root of the source
- * tree and available online at
- *
- * http://www.dspace.org/license/
- */
 package org.dspace.ref.compliance.rules;
-
-import com.atmire.utils.EmbargoUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.dspace.authorize.AuthorizeManager;
-import org.dspace.authorize.ResourcePolicy;
-import org.dspace.content.*;
-import org.dspace.core.Constants;
-import org.dspace.core.Context;
 
 import java.sql.SQLException;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
+import org.dspace.authorize.ResourcePolicy;
+import org.dspace.authorize.factory.AuthorizeServiceFactory;
+import org.dspace.authorize.service.AuthorizeService;
+import org.dspace.content.Bitstream;
+import org.dspace.content.Item;
+import org.dspace.content.factory.ContentServiceFactoryImpl;
+import org.dspace.content.service.ItemService;
+import org.dspace.core.Constants;
+import org.dspace.core.Context;
+import org.dspace.eperson.Group;
+
+import com.atmire.utils.EmbargoUtils;
+
 /**
  * TODO TOM UNIT TEST
  */
 public enum CustomField {
 
-    BITSTREAM_COUNT("bitstream.count") {
-        public List<Metadatum> createValueList(final Context context, final Item item) throws SQLException {
-            List<Metadatum> output = new LinkedList<Metadatum>();
-            for (Bitstream bitstream : item.getNonInternalBitstreams()) {
-                java.util.List<ResourcePolicy> policiesByDSOAndType = AuthorizeManager.getPoliciesActionFilter(context, bitstream, Constants.READ);
+	BITSTREAM_COUNT("bitstream.count") {
+		public List<String> createValueList(final Context context, final Item item) throws SQLException {
+			List<String> output = new LinkedList<String>();
+			for (Bitstream bitstream : itemService.getNonInternalBitstreams(context, item)) {
+				java.util.List<ResourcePolicy> policiesByDSOAndType = authorizeService.getPoliciesActionFilter(context,
+						bitstream, Constants.READ);
 
-                for (ResourcePolicy pol : policiesByDSOAndType) {
-                    //We are only interested in bitstreams that have a READ policy for Anonymous
-                    if (pol.getGroupID() == EmbargoUtils.ANONYMOUS_GROUP_ID) {
-                Metadatum value = new Metadatum();
-                value.value = bitstream.getName();
-                output.add(value);
-            }
-                }
-            }
+				for (ResourcePolicy pol : policiesByDSOAndType) {
+					// We are only interested in bitstreams that have a READ policy for Anonymous
+					if (pol.getGroup().getName() == Group.ANONYMOUS) {
+						String value = new String();
+						value = bitstream.getName();
+						output.add(value);
+					}
+				}
+			}
 
-            return output;
-        }
-    },
-    BITSTREAM_EMBARGO_ENABLED("bitstream.embargo.enabled") {
-        public List<Metadatum> createValueList(final Context context, final Item item) throws SQLException {
-            List<Metadatum> output = new LinkedList<Metadatum>();
-            Metadatum value = new Metadatum();
-            if (EmbargoUtils.getLastEmbargo(item, context) == null) {
-                value.value = "false";
-            } else {
-                value.value = "true";
-            }
-            output.add(value);
-            return output;
-        }
-    },
-    BITSTREAM_EMBARGO_ENDDATE("bitstream.embargo.enddate") {
-        public List<Metadatum> createValueList(final Context context, final Item item) throws SQLException {
-            List<Metadatum> output = new LinkedList<Metadatum>();
-            Date embargo = EmbargoUtils.getLastEmbargo(item, context);
-            if(embargo != null) {
-                Metadatum value = new Metadatum();
-                value.value = AbstractComplianceRule.getDateTimePrinter().print(embargo.getTime());
-                output.add(value);
-            }
-            return output;
-        }
-    },
-    ITEM_LIFECYCLE_STATUS("item.status") {
-        public List<Metadatum> createValueList(final Context context, final Item item) throws SQLException {
-            List<Metadatum> output = new LinkedList<Metadatum>();
+			return output;
+		}
+	},
+	BITSTREAM_EMBARGO_ENABLED("bitstream.embargo.enabled") {
+		public List<String> createValueList(final Context context, final Item item) throws SQLException {
+			List<String> output = new LinkedList<String>();
+			String value = new String();
+			if (EmbargoUtils.getLastEmbargo(item, context) == null) {
+				value = "false";
+			} else {
+				value = "true";
+			}
+			output.add(value);
+			return output;
+		}
+	},
+	BITSTREAM_EMBARGO_ENDDATE("bitstream.embargo.enddate") {
+		public List<String> createValueList(final Context context, final Item item) throws SQLException {
+			List<String> output = new LinkedList<String>();
+			Date embargo = EmbargoUtils.getLastEmbargo(item, context);
+			if (embargo != null) {
+				String value = AbstractComplianceRule.getDateTimePrinter().print(embargo.getTime());
+				output.add(value);
+			}
+			return output;
+		}
+	},
+	ITEM_LIFECYCLE_STATUS("item.status") {
+		public List<String> createValueList(final Context context, final Item item) throws SQLException {
+			List<String> output = new LinkedList<String>();
 
-            Metadatum value = new Metadatum();
-            if(item.isArchived()) {
-                value.value = "archived";
-            } else if(item.isWithdrawn()) {
-                value.value = "withdrawn";
-            } else if(WorkspaceItem.findByItem(context, item) != null) {
-                value.value = "workspace";
-            } else {
-                value.value = "workflow";
-            }
+			String value = "";
+			if (item.isArchived()) {
+				value = "archived";
+			} else if (item.isWithdrawn()) {
+				value = "withdrawn";
+			} else if (ContentServiceFactoryImpl.getInstance().getWorkspaceItemService().findByItem(context,
+					item) != null) {
+				value = "workspace";
+			} else {
+				value = "workflow";
+			}
 
-            output.add(value);
-            return output;
-        }
-    };
+			output.add(value);
+			return output;
+		}
+	};
 
-    private final String fieldName;
+	private final String fieldName;
 
-    CustomField(final String field) {
-        this.fieldName = field;
-    }
+	private final static ItemService itemService = ContentServiceFactoryImpl.getInstance().getItemService();
 
-    public String getFieldName() {
-        return fieldName;
-    }
+	private final static AuthorizeService authorizeService = AuthorizeServiceFactory.getInstance()
+			.getAuthorizeService();
 
-    public abstract List<Metadatum> createValueList(final Context context, final Item item) throws SQLException;
+	CustomField(final String field) {
+		this.fieldName = field;
+	}
 
-    public static CustomField findByField(final String field) {
-        CustomField result = null;
+	public String getFieldName() {
+		return fieldName;
+	}
 
-        for (CustomField customField : CustomField.values()) {
-            if(StringUtils.equals(customField.getFieldName(), field)) {
-                result = customField;
-                break;
-            }
-        }
+	public abstract List<String> createValueList(final Context context, final Item item) throws SQLException;
 
-        return result;
-    }
+	public static CustomField findByField(final String field) {
+		CustomField result = null;
+
+		for (CustomField customField : CustomField.values()) {
+			if (StringUtils.equals(customField.getFieldName(), field)) {
+				result = customField;
+				break;
+			}
+		}
+
+		return result;
+	}
 
 }

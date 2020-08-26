@@ -1,34 +1,37 @@
-/**
- * The contents of this file are subject to the license and copyright
- * detailed in the LICENSE and NOTICE files at the root of the source
- * tree and available online at
- *
- * http://www.dspace.org/license/
- */
 package com.atmire.xmlui.compliance.submission;
-
-import com.atmire.ref.compliance.submission.ExceptionInformation;
-import org.apache.cocoon.ProcessingException;
-import org.apache.commons.lang3.StringUtils;
-import org.dspace.app.xmlui.aspect.compliance.ComplianceUI;
-import org.dspace.app.xmlui.aspect.submission.AbstractSubmissionStep;
-import org.dspace.app.xmlui.wing.Message;
-import org.dspace.app.xmlui.wing.WingException;
-import org.dspace.app.xmlui.wing.element.*;
-import org.dspace.authorize.AuthorizeException;
-import org.dspace.content.Collection;
-import org.dspace.content.Metadatum;
-import org.dspace.ref.compliance.result.CategoryComplianceResult;
-import org.dspace.ref.compliance.result.ComplianceResult;
-import org.dspace.ref.compliance.service.ComplianceCheckService;
-import org.dspace.utils.DSpace;
-import org.xml.sax.SAXException;
 
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+
+import org.apache.cocoon.ProcessingException;
+import org.apache.commons.lang3.StringUtils;
+import org.dspace.app.xmlui.aspect.compliance.ComplianceUI;
+import org.dspace.app.xmlui.aspect.submission.AbstractSubmissionStep;
+import org.dspace.app.xmlui.wing.Message;
+import org.dspace.app.xmlui.wing.WingException;
+import org.dspace.app.xmlui.wing.element.Body;
+import org.dspace.app.xmlui.wing.element.Division;
+import org.dspace.app.xmlui.wing.element.Item;
+import org.dspace.app.xmlui.wing.element.List;
+import org.dspace.app.xmlui.wing.element.PageMeta;
+import org.dspace.app.xmlui.wing.element.Para;
+import org.dspace.app.xmlui.wing.element.Radio;
+import org.dspace.app.xmlui.wing.element.Select;
+import org.dspace.app.xmlui.wing.element.TextArea;
+import org.dspace.authorize.AuthorizeException;
+import org.dspace.content.Collection;
+import org.dspace.content.factory.ContentServiceFactory;
+import org.dspace.content.service.ItemService;
+import org.dspace.ref.compliance.result.CategoryComplianceResult;
+import org.dspace.ref.compliance.result.ComplianceResult;
+import org.dspace.ref.compliance.service.ComplianceCheckService;
+import org.dspace.utils.DSpace;
+import org.xml.sax.SAXException;
+
+import com.atmire.ref.compliance.submission.ExceptionInformation;
 
 /**
  * Created by jonas - jonas@atmire.com on 08/04/16.
@@ -50,6 +53,8 @@ public class REFExceptionStep extends AbstractSubmissionStep {
     private static ComplianceCheckService complianceCheckService = new DSpace().getServiceManager()
             .getServiceByName("refComplianceCheckService", ComplianceCheckService.class);
 
+    private ItemService itemService = ContentServiceFactory.getInstance().getItemService();
+    
     public void addPageMeta(PageMeta pageMeta) throws SAXException, WingException, SQLException, IOException, AuthorizeException {
         super.addPageMeta(pageMeta);
         pageMeta.addMetadata("javascript", null, "person-lookup", true).addContent("../../static/js/ref-exceptions.js");
@@ -160,10 +165,10 @@ public class REFExceptionStep extends AbstractSubmissionStep {
      * @return
      */
     private boolean checkPreselection(org.dspace.content.Item item, String metadata, String valueToCheck) {
-        Metadatum[] specifiedExceptionMetadata = item.getMetadataByMetadataString("refterms." + metadata);
+        String specifiedExceptionMetadata = itemService.getMetadata(item, "refterms." + metadata);
         boolean preselected =false;
-        if(specifiedExceptionMetadata !=null && specifiedExceptionMetadata.length>0 && StringUtils.isNotBlank(specifiedExceptionMetadata[0].value)){
-            if(StringUtils.isBlank(valueToCheck)||StringUtils.equals(specifiedExceptionMetadata[0].value,valueToCheck)){
+        if(StringUtils.isNotBlank(specifiedExceptionMetadata)){
+            if(StringUtils.isBlank(valueToCheck)||StringUtils.equals(specifiedExceptionMetadata,valueToCheck)){
                 preselected=true;
             }
         }
@@ -215,9 +220,9 @@ public class REFExceptionStep extends AbstractSubmissionStep {
 
     private String retrieveMetadata(String specifiedException) {
         String metadata = "";
-        Metadatum[] prefill = submission.getItem().getMetadataByMetadataString(specifiedException);
-        if(prefill!=null && prefill.length>0 && StringUtils.isNotBlank(prefill[0].value)){
-            metadata=prefill[0].value;
+        String prefill = itemService.getMetadata(submission.getItem(),specifiedException);
+        if(StringUtils.isNotBlank(prefill)){
+            metadata=prefill;
         }
         return metadata;
     }

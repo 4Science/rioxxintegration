@@ -1,31 +1,29 @@
-/**
- * The contents of this file are subject to the license and copyright
- * detailed in the LICENSE and NOTICE files at the root of the source
- * tree and available online at
- *
- * http://www.dspace.org/license/
- */
 package org.dspace.ref.compliance.service;
 
-import com.atmire.utils.EmbargoUtils;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.dspace.content.DCDate;
 import org.dspace.content.Item;
-import org.dspace.content.Metadatum;
+import org.dspace.content.MetadataValue;
+import org.dspace.content.factory.ContentServiceFactory;
+import org.dspace.content.service.ItemService;
 import org.dspace.core.Context;
+import org.dspace.core.factory.CoreServiceFactory;
 import org.dspace.ref.compliance.result.ComplianceResult;
 import org.dspace.ref.compliance.rules.CompliancePolicy;
 import org.dspace.ref.compliance.rules.exception.ValidationRuleDefinitionException;
 import org.dspace.ref.compliance.rules.factory.ComplianceCategoryRulesFactory;
 import org.dspace.util.subclasses.Metadata;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import com.atmire.utils.EmbargoUtils;
 
 /**
  * Implementation of {@link ComplianceCheckService}
@@ -48,6 +46,8 @@ public class ComplianceCheckServiceBean implements ComplianceCheckService {
 
     private ComplianceCategoryRulesFactory rulesFactory;
 
+    private ItemService itemService;
+    
     public ComplianceResult checkCompliance(final Context context, final Item item) {
         CompliancePolicy policy = getCompliancePolicy();
 
@@ -65,15 +65,12 @@ public class ComplianceCheckServiceBean implements ComplianceCheckService {
 
                 if (complianceResult.isApplicable()) {
                     complianceResult = policy.validate(context, item, complianceResult);
-
                     complianceResult.addEstimatedValues(fakeFields);
-
                 }
 
             } catch(Exception ex) {
                 context.abort();
                 log.warn(ex.getMessage(), ex);
-
             } finally {
                 // Always remove the temporary values
                 removeFakeValues(context, fakeFields, item);
@@ -102,13 +99,11 @@ public class ComplianceCheckServiceBean implements ComplianceCheckService {
 
     private void removeFakeValues(Context context, List<Metadata> fakeFields, Item item) {
         if(CollectionUtils.isNotEmpty(fakeFields) && context.isValid()) {
-
-            for (Metadata fakeField : fakeFields) {
-                item.clearMetadata(fakeField.schema, fakeField.element, fakeField.qualifier, fakeField.language);
-            }
             try {
-                item.update();
-                context.commit();
+            	for (Metadata fakeField : fakeFields) {
+                    getItemService().clearMetadata(context, item, fakeField.schema, fakeField.element, fakeField.qualifier, fakeField.language);
+                }
+                getItemService().update(context, item);
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
             }
@@ -131,10 +126,10 @@ public class ComplianceCheckServiceBean implements ComplianceCheckService {
 
         if (MapUtils.isNotEmpty(fakeFieldMap)) {
             for (String field : fakeFieldMap.keySet()) {
-                Metadatum[] dcValues = item.getMetadataByMetadataString(field);
+                List<MetadataValue> dcValues = getItemService().getMetadataByMetadataString(item, field);
 
-                if (dcValues.length == 0) {
-                    Metadata metadata = org.dspace.util.MetadataFieldString.encapsulate(field);
+                if (dcValues.size() == 0) {
+                	Metadata metadata = org.dspace.util.MetadataFieldString.encapsulate(field);
                     addFakeValue(context, item, metadata, fakeFieldMap.get(field));
                     fakeFields.add(metadata);
                 }
@@ -145,14 +140,10 @@ public class ComplianceCheckServiceBean implements ComplianceCheckService {
     }
 
     private void addFakeValue(Context context, Item item, Metadata field, String value) {
-        String estimatedValue = estimateValue(context, item, value);
-
-        item.addMetadata(field.schema, field.element, field.qualifier, field.language, estimatedValue);
-        field.value = estimatedValue;
-
         try {
-            item.update();
-            context.commit();
+            String estimatedValue = estimateValue(context, item, value);
+            getItemService().addMetadata(context, item, field.schema, field.element, field.qualifier, field.language, estimatedValue);
+            getItemService().update(context, item);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         }
@@ -171,11 +162,7 @@ public class ComplianceCheckServiceBean implements ComplianceCheckService {
 
             estimatedValue = new DCDate(lastEmbargo).toString();
         } else {
-            Metadatum[] metadata = item.getMetadataByMetadataString(value);
-
-            if (metadata.length > 0) {
-                estimatedValue = metadata[0].value;
-            }
+            estimatedValue = getItemService().getMetadata(item, value);
         }
         return estimatedValue;
     }
@@ -208,4 +195,15 @@ public class ComplianceCheckServiceBean implements ComplianceCheckService {
     public void setIdentifier(String identifier) {
         this.identifier = identifier;
     }
+
+	public ItemService getItemService() {
+		if(itemService == null) {
+			itemService = ContentServiceFactory.getInstance().getItemService();
+		}
+		return itemService;
+	}
+
+	public void setItemService(ItemService itemService) {
+		this.itemService = itemService;
+	}
 }

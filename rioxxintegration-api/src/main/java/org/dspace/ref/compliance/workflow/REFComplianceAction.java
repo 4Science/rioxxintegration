@@ -1,25 +1,19 @@
-/**
- * The contents of this file are subject to the license and copyright
- * detailed in the LICENSE and NOTICE files at the root of the source
- * tree and available online at
- *
- * http://www.dspace.org/license/
- */
 package org.dspace.ref.compliance.workflow;
 
-import java.io.*;
-import java.sql.*;
-import javax.servlet.http.*;
-import org.dspace.authorize.*;
-import org.dspace.core.*;
-import org.dspace.ref.compliance.result.*;
-import org.dspace.ref.compliance.service.*;
-import org.dspace.utils.*;
-import org.dspace.xmlworkflow.*;
-import org.dspace.xmlworkflow.state.*;
-import org.dspace.xmlworkflow.state.actions.*;
-import org.dspace.xmlworkflow.state.actions.processingaction.*;
-import org.dspace.xmlworkflow.storedcomponents.*;
+import java.io.IOException;
+import java.sql.SQLException;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.dspace.authorize.AuthorizeException;
+import org.dspace.core.Context;
+import org.dspace.ref.compliance.result.ComplianceResult;
+import org.dspace.ref.compliance.service.ComplianceCheckService;
+import org.dspace.utils.DSpace;
+import org.dspace.xmlworkflow.state.Step;
+import org.dspace.xmlworkflow.state.actions.ActionResult;
+import org.dspace.xmlworkflow.state.actions.processingaction.ProcessingAction;
+import org.dspace.xmlworkflow.storedcomponents.XmlWorkflowItem;
 
 /**
  * Created by Philip Vissenaekens (philip at atmire dot com)
@@ -32,12 +26,12 @@ public class REFComplianceAction extends ProcessingAction {
             .getServiceByName("refComplianceCheckService", ComplianceCheckService.class);
 
     @Override
-    public void activate(Context c, XmlWorkflowItem wf) throws SQLException, IOException, AuthorizeException, WorkflowException {
+    public void activate(Context c, XmlWorkflowItem wf) throws SQLException, IOException, AuthorizeException {
 
     }
 
     @Override
-    public ActionResult execute(Context c, XmlWorkflowItem wfi, Step step, HttpServletRequest request) throws SQLException, AuthorizeException, IOException, WorkflowException {
+    public ActionResult execute(Context c, XmlWorkflowItem wfi, Step step, HttpServletRequest request) throws SQLException, AuthorizeException, IOException {
         if(request.getParameter("submit_continue") != null && allowContinue(c, wfi)){
             return new ActionResult(ActionResult.TYPE.TYPE_OUTCOME, ActionResult.OUTCOME_COMPLETE);
         } else if (request.getParameter("submit_return") != null){

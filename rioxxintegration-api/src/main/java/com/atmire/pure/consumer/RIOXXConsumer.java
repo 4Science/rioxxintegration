@@ -1,12 +1,6 @@
-/**
- * The contents of this file are subject to the license and copyright
- * detailed in the LICENSE and NOTICE files at the root of the source
- * tree and available online at
- *
- * http://www.dspace.org/license/
- */
 package com.atmire.pure.consumer;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -18,32 +12,45 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.dspace.authority.AuthorityValue;
-import org.dspace.authority.AuthorityValueFinder;
+import org.dspace.authority.AuthorityValueServiceImpl;
 import org.dspace.authority.FunderAuthorityValue;
 import org.dspace.authority.IndexingUtils;
 import org.dspace.authority.PersonAuthorityValue;
 import org.dspace.authority.ProjectAuthorityValue;
+import org.dspace.authority.factory.AuthorityServiceFactory;
 import org.dspace.authority.indexer.AuthorityIndexingService;
 import org.dspace.authority.orcid.Orcidv2AuthorityValue;
+import org.dspace.authority.service.AuthorityService;
+import org.dspace.authority.service.AuthorityValueService;
 import org.dspace.content.Item;
-import org.dspace.content.Metadatum;
+import org.dspace.content.MetadataValue;
 import org.dspace.content.authority.Choices;
-import org.dspace.content.authority.MetadataAuthorityManager;
+import org.dspace.content.authority.factory.ContentAuthorityServiceFactory;
+import org.dspace.content.authority.service.MetadataAuthorityService;
+import org.dspace.content.factory.ContentServiceFactory;
+import org.dspace.content.service.ItemService;
 import org.dspace.core.Constants;
 import org.dspace.core.Context;
 import org.dspace.event.Consumer;
 import org.dspace.event.Event;
 import org.dspace.project.ProjectService;
+import org.dspace.services.factory.DSpaceServicesFactory;
 import org.dspace.utils.DSpace;
+import org.springframework.beans.factory.annotation.Autowired;
 
 public class RIOXXConsumer implements Consumer {
 
-    private Set<Integer> itemIds = new HashSet<>();
+    private Set<UUID> itemIds = new HashSet<>();
     private ProjectService projectService = new DSpace().getServiceManager()
             .getServiceByName("ProjectService", ProjectService.class);
     private static final String ORCID_ID_SYNTAX = "\\d{4}-\\d{4}-\\d{4}-(\\d{3}X|\\d{4})";
-    AuthorityValueFinder authorityValueFinder = new AuthorityValueFinder();
+    
+    protected AuthorityValueServiceImpl authorityValueService = DSpaceServicesFactory.getInstance().getServiceManager().getServicesByType(AuthorityValueServiceImpl.class).get(0);
 
+    private ItemService itemService = ContentServiceFactory.getInstance().getItemService();
+    
+    protected MetadataAuthorityService metadataAuthorityService = ContentAuthorityServiceFactory.getInstance().getMetadataAuthorityService();
+    
     private static Logger log = Logger.getLogger(RIOXXConsumer.class);
 
     public void initialize() throws Exception {
@@ -52,7 +59,7 @@ public class RIOXXConsumer implements Consumer {
 
     public void consume(Context ctx, Event event) throws Exception {
         int subjectType = event.getSubjectType();
-        int subjectID = event.getSubjectID();
+        UUID subjectID = event.getSubjectID();
 
         switch (subjectType) {
             case Constants.ITEM:
@@ -66,16 +73,16 @@ public class RIOXXConsumer implements Consumer {
     }
 
     public void end(Context ctx) throws Exception {
-        for (Integer itemId : itemIds) {
-            Item item = Item.find(ctx, itemId);
+        for (UUID itemId : itemIds) {
+            Item item = itemService.find(ctx, itemId);
             log.debug("updating funders of item " + item.getID());
 
-            Metadatum[] metadatum = item.getMetadata("dc", "sword", "submission", Item.ANY);
-            if (!(metadatum.length == 0 || StringUtils.equals(metadatum[0].value, "false"))) {
-                Metadatum[] metadata = item.getMetadata("rioxxterms", "newfunderprojectpair", null, Item.ANY);
-                item.clearMetadata("rioxxterms", "newfunderprojectpair", null, Item.ANY);
+            List<MetadataValue> metadatum = itemService.getMetadata(item, "dc", "sword", "submission", Item.ANY);
+            if (!(metadatum.size() == 0 || StringUtils.equals(metadatum.get(0).getValue(), "false"))) {
+                List<MetadataValue> metadata = itemService.getMetadata(item, "rioxxterms", "newfunderprojectpair", null, Item.ANY);
+                itemService.clearMetadata(ctx, item, "rioxxterms", "newfunderprojectpair", null, Item.ANY);
 
-                for (Metadatum m : metadata) {
+                for (MetadataValue m : metadata) {
 
                     String funderName = "";
                     String funderID = "";
@@ -83,7 +90,7 @@ public class RIOXXConsumer implements Consumer {
 
 
                     //funder and project are in same metadatafield separated by ::
-                    String[] split = m.value.split("::");
+                    String[] split = m.getValue().split("::");
 
                     if (split.length == 3) {
                         funderID =  StringUtils.substringAfter(split[0], "dx.doi.org/");
@@ -94,9 +101,8 @@ public class RIOXXConsumer implements Consumer {
                     if ((StringUtils.isBlank(funderID) && StringUtils.isBlank(funderName)) || StringUtils.isBlank(project)) {
                         log.warn("No funder or no project found");
                     } else {
-                        AuthorityValueFinder authorityValueFinder = new AuthorityValueFinder();
 
-                        List<AuthorityValue> projectAuthorityList = authorityValueFinder
+                        List<AuthorityValue> projectAuthorityList = authorityValueService
                                 .findByValue(ctx, "rioxxterms_identifier_project", project);
 
                         FunderAuthorityValue funderAuthority = findFunder(ctx, funderName, funderID);
@@ -121,32 +127,29 @@ public class RIOXXConsumer implements Consumer {
 
                         //Add the metadata + delete the newfunderprojectpair
                         if (projectAuthority != null && funderAuthority != null) {
-                            addValue(item, "rioxxterms", "identifier", "project", null, projectAuthority);
-                            addValue(item, "rioxxterms", "funder", null, null, funderAuthority);
+                            addValue(ctx, item, "rioxxterms", "identifier", "project", null, projectAuthority);
+                            addValue(ctx, item, "rioxxterms", "funder", null, null, funderAuthority);
                             log.info("project - funder pair (" + projectAuthority.getValue() + " - " + funderAuthority
                                     .getValue() + ") is added to the item " + item.getID());
                         } else {
-                            item.addMetadata("rioxxterms", "newfunderprojectpair", null, m.language, m.value);
+                            itemService.addMetadata(ctx, item, "rioxxterms", "newfunderprojectpair", null, m.getLanguage(), m.getValue());
                         }
                     }
                 }
-                for (Metadatum m : item.getMetadata("*", "*", "*", "*")) {
-                    if (MetadataAuthorityManager.getManager().isAuthorityControlled(m.getField().replace(".", "_"))) {
+                for (MetadataValue m : itemService.getMetadata(item, "*", "*", "*", "*")) {
+                    if (metadataAuthorityService.isAuthorityControlled(m.getMetadataField().toString('_'))) {
                         handleAuthorityControlledMetadatum(ctx, item, m);
                     }
                 }
-                item.update();
+                itemService.update(ctx, item);
             }
         }
         itemIds.clear();
-        // commit context
-        ctx.getDBConnection().commit();
-
 
     }
 
-    private void handleAuthorityControlledMetadatum(Context ctx, Item item, Metadatum m) {
-        String[] split = m.value.split("::");
+    private void handleAuthorityControlledMetadatum(Context ctx, Item item, MetadataValue m) throws SQLException {
+        String[] split = m.getValue().split("::");
         String email = "";
         String name = "";
 
@@ -175,26 +178,26 @@ public class RIOXXConsumer implements Consumer {
                 handleOrcidMetadatum(ctx, item, m, orcidID, name, email);
             } else {
                 PersonAuthorityValue personAuthorityValue = handlePersonAuthority(ctx, m, name, email);
-                replaceMetadatumWithAuthority(item, m, name, personAuthorityValue.getId());
+                replaceMetadatumWithAuthority(ctx, item, m, name, personAuthorityValue.getId());
             }
         }
     }
 
-    private void handleOrcidMetadatum(Context ctx, Item item, Metadatum m, String orcidID, String name, String email) {
-        Orcidv2AuthorityValue authorityValue = (Orcidv2AuthorityValue) authorityValueFinder.findByOrcidID(ctx, orcidID);
+    private void handleOrcidMetadatum(Context ctx, Item item, MetadataValue m, String orcidID, String name, String email) throws SQLException {
+        Orcidv2AuthorityValue authorityValue = (Orcidv2AuthorityValue) authorityValueService.findByOrcidID(ctx, orcidID);
         if (authorityValue != null) {
             if (StringUtils.isNotBlank(email) && !authorityValue.getEmails().contains(email)) {
                 authorityValue.addEmail(email);
                 indexAuthority(authorityValue);
             }
-            replaceMetadatumWithAuthority(item, m, name, authorityValue.getId());
+            replaceMetadatumWithAuthority(ctx, item, m, name, authorityValue.getId());
         } else {
             Orcidv2AuthorityValue orcidAuthorityValue = handleOrcidAuthority(m, orcidID, name, email);
-            replaceMetadatumWithAuthority(item, m, name, orcidAuthorityValue.getId());
+            replaceMetadatumWithAuthority(ctx, item, m, name, orcidAuthorityValue.getId());
         }
     }
 
-    private Orcidv2AuthorityValue handleOrcidAuthority(Metadatum m, String orcidID, String name, String email) {
+    private Orcidv2AuthorityValue handleOrcidAuthority(MetadataValue m, String orcidID, String name, String email) {
         Orcidv2AuthorityValue orcidAuthorityValue = Orcidv2AuthorityValue.create();
         orcidAuthorityValue.setOrcid_id(orcidID);
         orcidAuthorityValue.setValue(name);
@@ -217,13 +220,13 @@ public class RIOXXConsumer implements Consumer {
 
         orcidAuthorityValue.setFirstName(firstName);
         orcidAuthorityValue.setLastName(lastName);
-        orcidAuthorityValue.setField(m.getField().replace(".", "_"));
+        orcidAuthorityValue.setField(m.getMetadataField().toString('_'));
         indexAuthority(orcidAuthorityValue);
         return orcidAuthorityValue;
     }
 
-    private PersonAuthorityValue handlePersonAuthority(Context context, Metadatum m,  String name, String email) {
-        List<AuthorityValue> authorities = authorityValueFinder.findByExactValue(context, StringUtils.replace(m.getField(), ".", "_" ), name);
+    private PersonAuthorityValue handlePersonAuthority(Context context, MetadataValue m,  String name, String email) {
+        List<AuthorityValue> authorities = authorityValueService.findByExactValue(context, m.getMetadataField().toString('_'), name);
 
         for (AuthorityValue authorityValue : authorities) {
             if(authorityValue.getAuthorityType().equals("person")){
@@ -256,7 +259,7 @@ public class RIOXXConsumer implements Consumer {
 
         personAuthorityValue.setFirstName(firstName);
         personAuthorityValue.setLastName(lastName);
-        personAuthorityValue.setField(m.getField().replace(".", "_"));
+        personAuthorityValue.setField(m.getMetadataField().toString('_'));
         indexAuthority(personAuthorityValue);
         return personAuthorityValue;
     }
@@ -264,37 +267,38 @@ public class RIOXXConsumer implements Consumer {
     private void indexAuthority(AuthorityValue authorityValue) {
         AuthorityIndexingService indexingService = IndexingUtils.getServiceManager().getServiceByName(
                 AuthorityIndexingService.class.getName(), AuthorityIndexingService.class);
-        indexingService.indexContent(authorityValue, true);
+        indexingService.indexContent(authorityValue);
         indexingService.commit();
     }
 
-    private void replaceMetadatumWithAuthority(Item item, Metadatum m, String name, String id) {
-        Metadatum authorityMetadatum = m.copy();
-        authorityMetadatum.value = name;
-        authorityMetadatum.authority = id;
-        authorityMetadatum.confidence = Choices.CF_ACCEPTED;
+    private void replaceMetadatumWithAuthority(Context context, Item item, MetadataValue m, String name, String id) throws SQLException {
+    	
+    	String schema = m.getMetadataField().getMetadataSchema().getName();
+    	String element = m.getMetadataField().getElement();
+    	String qualifier = m.getMetadataField().getQualifier();
+    	String language = m.getLanguage();
+    	
+        List<MetadataValue> list = itemService.getMetadata(item, schema, element, qualifier, language);
+        itemService.clearMetadata(context, item, schema, element, qualifier, language);
 
-        Metadatum[] list = item.getMetadata(m.schema, m.element, m.qualifier, m.language);
-        item.clearMetadata(m.schema, m.element, m.qualifier, m.language);
-
-        for (Metadatum metadatum : list) {
+        for (MetadataValue metadatum : list) {
             if (!metadatum.equals(m)) {
-                item.addMetadata(metadatum.schema, metadatum.element, metadatum.qualifier, metadatum.language, metadatum.value, metadatum.authority, metadatum.confidence);
+                itemService.addMetadata(context, item, schema, element, qualifier, metadatum.getLanguage(), metadatum.getValue(), metadatum.getAuthority(), metadatum.getConfidence());
             }
         }
-        item.addMetadata(authorityMetadatum.schema, authorityMetadatum.element, authorityMetadatum.qualifier,
-                authorityMetadatum.language, authorityMetadatum.value, authorityMetadatum.authority,
-                authorityMetadatum.confidence);
+        itemService.addMetadata(context, item, schema, element, qualifier,
+                m.getLanguage(), name, id,
+                Choices.CF_ACCEPTED);
     }
 
     public void finish(Context ctx) throws Exception {
 
     }
 
-    private void addValue(Item item, String schema, String element, String qualifier, String lang,
-                          AuthorityValue authorityValue) {
+    private void addValue(Context context, Item item, String schema, String element, String qualifier, String lang,
+                          AuthorityValue authorityValue) throws SQLException {
         if (!itemFieldHasValue(item, schema, element, qualifier, lang, authorityValue)) {
-            item.addMetadata(schema, element, qualifier, null, authorityValue.getValue(), authorityValue.getId(),
+            itemService.addMetadata(context, item, schema, element, qualifier, null, authorityValue.getValue(), authorityValue.getId(),
                     Choices.CF_ACCEPTED);
         }
     }
@@ -306,11 +310,11 @@ public class RIOXXConsumer implements Consumer {
             language = Item.ANY;
         }
 
-        List<Metadatum> metadata = item.getMetadata(schema, element, qualifier, language, Item.ANY);
+        List<MetadataValue> metadata = itemService.getMetadata(item, schema, element, qualifier, language, Item.ANY);
 
-        for (Metadatum metadatum : metadata) {
-            if (StringUtils.equals(value.getValue(), metadatum.value) && StringUtils
-                    .equals(value.getId(), metadatum.authority)) {
+        for (MetadataValue metadatum : metadata) {
+            if (StringUtils.equals(value.getValue(), metadatum.getValue()) && StringUtils
+                    .equals(value.getId(), metadatum.getAuthority())) {
                 return true;
             }
         }
@@ -324,12 +328,12 @@ public class RIOXXConsumer implements Consumer {
 
         if(StringUtils.isNotBlank(funderID)) {
             //Look for funder and project in authority core
-            funderAuthorityList = authorityValueFinder
+            funderAuthorityList = authorityValueService
                     .findByFieldAndValue(ctx, "label_funderID", funderID);
         }
 
         if(CollectionUtils.isEmpty(funderAuthorityList) && StringUtils.isNotBlank(funderName)) {
-            funderAuthorityList = authorityValueFinder
+            funderAuthorityList = authorityValueService
                     .findByValue(ctx, "rioxxterms_funder", funderName);
         }
 
@@ -340,4 +344,5 @@ public class RIOXXConsumer implements Consumer {
 
         return funderAuthority;
     }
+    
 }

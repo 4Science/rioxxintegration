@@ -1,10 +1,3 @@
-/**
- * The contents of this file are subject to the license and copyright
- * detailed in the LICENSE and NOTICE files at the root of the source
- * tree and available online at
- *
- * http://www.dspace.org/license/
- */
 package com.atmire.pure.consumer;
 
 import java.sql.SQLException;
@@ -12,36 +5,49 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.dspace.authorize.AuthorizeException;
-import org.dspace.authorize.AuthorizeManager;
 import org.dspace.authorize.ResourcePolicy;
+import org.dspace.authorize.factory.AuthorizeServiceFactory;
+import org.dspace.authorize.service.AuthorizeService;
 import org.dspace.content.Bitstream;
 import org.dspace.content.Bundle;
 import org.dspace.content.DCDate;
 import org.dspace.content.Item;
-import org.dspace.content.Metadatum;
+import org.dspace.content.MetadataValue;
+import org.dspace.content.factory.ContentServiceFactory;
+import org.dspace.content.service.ItemService;
 import org.dspace.core.Constants;
 import org.dspace.core.Context;
 import org.dspace.eperson.Group;
+import org.dspace.eperson.factory.EPersonServiceFactory;
+import org.dspace.eperson.service.GroupService;
 import org.dspace.event.Consumer;
 import org.dspace.event.Event;
+import org.springframework.beans.factory.annotation.Autowired;
 
 public class RIOXXEmbargoConsumer implements Consumer {
 
-    private Set<Integer> itemIds = new HashSet<>();
+    private Set<UUID> itemIds = new HashSet<>();
 
     private static Logger log = Logger.getLogger(RIOXXEmbargoConsumer.class);
 
+    private ItemService itemService = ContentServiceFactory.getInstance().getItemService();
+    
+    private AuthorizeService authorizeService = AuthorizeServiceFactory.getInstance().getAuthorizeService();
+
+    private GroupService groupService = EPersonServiceFactory.getInstance().getGroupService();
+    
     public void initialize() throws Exception {
 
     }
 
     public void consume(Context ctx, Event event) throws Exception {
         int subjectType = event.getSubjectType();
-        int subjectID = event.getSubjectID();
+        UUID subjectID = event.getSubjectID();
 
         switch (subjectType) {
             case Constants.ITEM:
@@ -55,15 +61,15 @@ public class RIOXXEmbargoConsumer implements Consumer {
     }
 
     public void end(Context ctx) throws Exception {
-        for (Integer itemId : itemIds) {
-            Item item = Item.find(ctx, itemId);
+        for (UUID itemId : itemIds) {
+            Item item = itemService.find(ctx, itemId);
             log.debug("updating rioxxEmbargo of item " + item.getID());
 
-            Metadatum[] metadatum = item.getMetadata("dc", "sword", "submission", Item.ANY);
-            if (metadatum.length > 0 && StringUtils.equals(metadatum[0].value, "true")) {
-                Metadatum[] dateMetadatum = item.getMetadata("dc", "rights", "embargodate", Item.ANY);
-                if (dateMetadatum.length > 0) {
-                    DCDate policyStartDate = new DCDate(dateMetadatum[0].value);
+            List<MetadataValue> metadatum = itemService.getMetadata(item, "dc", "sword", "submission", Item.ANY);
+            if (metadatum.size() > 0 && StringUtils.equals(metadatum.get(0).getValue(), "true")) {
+            	List<MetadataValue> dateMetadatum = itemService.getMetadata(item, "dc", "rights", "embargodate", Item.ANY);
+                if (dateMetadatum.size() > 0) {
+                    DCDate policyStartDate = new DCDate(dateMetadatum.get(0).getValue());
                     if (policyStartDate.toDate().after(DCDate.getCurrent().toDate())) {
                         processOriginalBundleWithPolicyStartDate(ctx, item, policyStartDate);
                     }
@@ -71,21 +77,18 @@ public class RIOXXEmbargoConsumer implements Consumer {
             }
         }
         itemIds.clear();
-        // commit context
-        ctx.getDBConnection().commit();
-
 
     }
 
     private void processOriginalBundleWithPolicyStartDate(Context ctx, Item item, DCDate policyStartDate)
         throws SQLException, AuthorizeException {
-        Bundle[] originalBundles = item.getBundles(Constants.CONTENT_BUNDLE_NAME);
-        if(originalBundles.length > 0) {
-            Bundle orginalBundle = originalBundles[0];
+        List<Bundle> originalBundles = itemService.getBundles(item, Constants.CONTENT_BUNDLE_NAME);
+        if(originalBundles.size() > 0) {
+            Bundle orginalBundle = originalBundles.get(0);
             for (Bitstream bitstream : orginalBundle.getBitstreams()) {
                 handleBitstreamPolicy(ctx, policyStartDate, bitstream);
             }
-            item.update();
+            itemService.update(ctx, item);
         }
     }
 
@@ -93,19 +96,15 @@ public class RIOXXEmbargoConsumer implements Consumer {
         throws SQLException, AuthorizeException {
 
         //Remove all policies and prepare for the assigning of the embargo policy
-        AuthorizeManager.removeAllPolicies(ctx, bitstream);
+        authorizeService.removeAllPolicies(ctx, bitstream);
 
-        ResourcePolicy resourcePolicy = ResourcePolicy.create(ctx);
-        resourcePolicy.setGroup(Group.find(ctx, Group.ANONYMOUS_ID));
-        resourcePolicy.setAction(Constants.READ);
-        resourcePolicy.setResource(bitstream);
-        resourcePolicy.setRpName("RIOXXEmbargo");
+        ResourcePolicy resourcePolicy = authorizeService.createResourcePolicy(ctx, bitstream, groupService.findByName(ctx, Group.ANONYMOUS), null, Constants.READ, "RIOXXEmbargo");
         resourcePolicy.setStartDate(policyStartDate.toDate());
 
         List<ResourcePolicy> resourcePolicyList = new LinkedList<>();
         resourcePolicyList.add(resourcePolicy);
 
-        AuthorizeManager.addPolicies(ctx, resourcePolicyList, bitstream);
+        authorizeService.addPolicies(ctx, resourcePolicyList, bitstream);
     }
 
     public void finish(Context ctx) throws Exception {

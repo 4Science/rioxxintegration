@@ -1,24 +1,20 @@
-/**
- * The contents of this file are subject to the license and copyright
- * detailed in the LICENSE and NOTICE files at the root of the source
- * tree and available online at
- *
- * http://www.dspace.org/license/
- */
 package org.dspace.app.xmlui.aspect.project;
 
 import org.dspace.app.xmlui.wing.Message;
 import org.dspace.app.xmlui.wing.WingException;
 import org.dspace.app.xmlui.wing.element.List;
 import org.dspace.app.xmlui.wing.element.Text;
-import org.dspace.content.authority.ChoiceAuthorityManager;
-import org.dspace.content.authority.MetadataAuthorityManager;
+import org.dspace.content.authority.factory.ContentAuthorityServiceFactory;
+import org.dspace.content.authority.service.ChoiceAuthorityService;
+import org.dspace.content.authority.service.MetadataAuthorityService;
 
 /**
  * Created by jonas - jonas@atmire.com on 03/10/16.
  */
 public class ProjectFieldRenderer {
 
+    protected ChoiceAuthorityService choiceAuthorityService = ContentAuthorityServiceFactory.getInstance().getChoiceAuthorityService();
+    protected MetadataAuthorityService metadataAuthorityService = ContentAuthorityServiceFactory.getInstance().getMetadataAuthorityService();
 
     public Text generalisedOneBoxFieldRender(List form, String fieldName, boolean readOnly, boolean required, Message label, Message hint) throws WingException {
         org.dspace.app.xmlui.wing.element.Item formItem = form.addItem();
@@ -29,14 +25,14 @@ public class ProjectFieldRenderer {
         if(hint!=null) {
             text.setHelp(hint);
         }
-        String fieldKey = MetadataAuthorityManager.makeFieldKey("rioxxterms", "identifier", "project");
+        String fieldKey = metadataAuthorityService.makeFieldKey("rioxxterms", "identifier", "project");
         text.setAuthorityControlled();
-        text.setAuthorityRequired(MetadataAuthorityManager.getManager().isAuthorityRequired(fieldKey));
+        text.setAuthorityRequired(metadataAuthorityService.isAuthorityRequired(fieldKey));
 
-        if (ChoiceAuthorityManager.getManager().isChoicesConfigured(fieldKey)) {
+        if (choiceAuthorityService.isChoicesConfigured(fieldKey)) {
             text.setChoices(fieldKey);
-            text.setChoicesPresentation(ChoiceAuthorityManager.getManager().getPresentation(fieldKey));
-            text.setChoicesClosed(ChoiceAuthorityManager.getManager().isClosed(fieldKey));
+            text.setChoicesPresentation(choiceAuthorityService.getPresentation(fieldKey));
+            text.setChoicesClosed(choiceAuthorityService.isClosed(fieldKey));
         }
 
         if (readOnly) {

@@ -1,11 +1,9 @@
-/**
- * The contents of this file are subject to the license and copyright
- * detailed in the LICENSE and NOTICE files at the root of the source
- * tree and available online at
- *
- * http://www.dspace.org/license/
- */
 package org.dspace.app.xmlui.aspect.administrative.item;
+
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.Map;
+import java.util.UUID;
 
 import org.apache.avalon.framework.parameters.Parameters;
 import org.apache.cocoon.ProcessingException;
@@ -16,20 +14,22 @@ import org.dspace.app.xmlui.aspect.project.ProjectFieldRenderer;
 import org.dspace.app.xmlui.cocoon.AbstractDSpaceTransformer;
 import org.dspace.app.xmlui.wing.Message;
 import org.dspace.app.xmlui.wing.WingException;
-import org.dspace.app.xmlui.wing.element.*;
-import org.dspace.authority.DefaultAuthorityCreator;
+import org.dspace.app.xmlui.wing.element.Body;
+import org.dspace.app.xmlui.wing.element.Division;
+import org.dspace.app.xmlui.wing.element.List;
+import org.dspace.app.xmlui.wing.element.PageMeta;
+import org.dspace.app.xmlui.wing.element.Row;
+import org.dspace.app.xmlui.wing.element.Table;
 import org.dspace.authority.ProjectAuthorityValue;
 import org.dspace.content.Collection;
 import org.dspace.content.Item;
-import org.dspace.content.Metadatum;
+import org.dspace.content.MetadataValue;
+import org.dspace.content.factory.ContentServiceFactory;
+import org.dspace.content.service.ItemService;
 import org.dspace.core.ConfigurationManager;
 import org.dspace.project.ProjectService;
 import org.dspace.utils.DSpace;
 import org.xml.sax.SAXException;
-
-import java.io.IOException;
-import java.sql.SQLException;
-import java.util.Map;
 
 /**
  * Created by jonas - jonas@atmire.com on 03/10/16.
@@ -58,18 +58,17 @@ public class EditItemFundingForm extends AbstractDSpaceTransformer {
 
     private ProjectAuthorityValue newProject;
 
-    private DefaultAuthorityCreator defaultAuthorityCreator = new DSpace().getServiceManager().getServiceByName("defaultAuthorityCreator", DefaultAuthorityCreator.class);
     private ProjectService projectService = new DSpace().getServiceManager().getServiceByName("ProjectService", ProjectService.class);
 
+    protected ItemService itemService = ContentServiceFactory.getInstance().getItemService();
+    
     @Override
     public void setup(SourceResolver resolver, Map objectModel, String src, Parameters parameters) throws ProcessingException, SAXException, IOException {
         super.setup(resolver, objectModel, src, parameters);
         Request request = ObjectModelHelper.getRequest(objectModel);
         newProject = (ProjectAuthorityValue) request.getSession().getAttribute("newProject");
-
-        ProjectAuthorityValue project = defaultAuthorityCreator.retrieveDefaultProject(context);
-
     }
+    
     public void addPageMeta(PageMeta pageMeta) throws WingException
     {
         pageMeta.addMetadata("title").addContent(T_title);
@@ -86,8 +85,9 @@ public class EditItemFundingForm extends AbstractDSpaceTransformer {
     }
 
     public void addBody(Body body) throws SQLException, WingException {
-        int itemID = parameters.getParameterAsInteger("itemID",-1);
-        Item item = Item.find(context, itemID);
+        // Get our parameters and state
+		UUID itemID = UUID.fromString(parameters.getParameter("itemID", null));
+		Item item = itemService.find(context, itemID);
 
         // DIVISION: main
         Division main = body.addInteractiveDivision("edit-item-status", contextPath+"/admin/item", Division.METHOD_POST,"primary administrative edit-item-status");
@@ -108,7 +108,7 @@ public class EditItemFundingForm extends AbstractDSpaceTransformer {
         options.addItem().addXref(baseURL + "&submit_curate", T_option_curate);
 
 
-        Collection collection = item.getCollections()[0];
+        Collection collection = item.getOwningCollection();
 
         String actionURL = contextPath + "/handle/" + collection.getHandle() + "/submit/" + knot.getId() + ".continue";
         Division div = main.addInteractiveDivision("submit-describe", actionURL, Division.METHOD_POST, "primary submission");
@@ -126,7 +126,7 @@ public class EditItemFundingForm extends AbstractDSpaceTransformer {
 
         form.addItem("project_funder_help","").addContent(T_project_funder_hint.parameterize(ConfigurationManager.getProperty("mail.admin")));
 
-        Metadatum[] dcValues = item.getMetadata("rioxxterms", "identifier", "project", Item.ANY);
+        java.util.List<MetadataValue> dcValues = itemService.getMetadata(item, "rioxxterms", "identifier", "project", Item.ANY);
 
         form.addItem().addButton("submit_add").setValue("Add");
 
@@ -135,22 +135,22 @@ public class EditItemFundingForm extends AbstractDSpaceTransformer {
 
 
     }
-    private void renderResults(Division div, Metadatum[] dcValues) throws WingException {
-        if (dcValues != null && dcValues.length > 0) {
+    private void renderResults(Division div, java.util.List<MetadataValue> dcValues) throws WingException {
+        if (dcValues != null && dcValues.size() > 0) {
             Division projectDiv = div.addDivision("projects");
 
-            Table table = projectDiv.addTable("project-table", 3, dcValues.length + 1);
+            Table table = projectDiv.addTable("project-table", 3, dcValues.size() + 1);
             Row header = table.addRow(Row.ROLE_HEADER);
             header.addCell().addContent(T_project_label);
             header.addCell().addContent(T_funder_label);
             header.addCell().addContent("");
 
-            for (Metadatum dcValue : dcValues) {
+            for (MetadataValue dcValue : dcValues) {
                 ProjectAuthorityValue project;
-                if (newProject != null && newProject.getId().equals(dcValue.authority)) {
+                if (newProject != null && newProject.getId().equals(dcValue.getAuthority())) {
                     project = newProject;
                 } else {
-                    project = projectService.getProjectByAuthorityId(context, dcValue.authority);
+                    project = projectService.getProjectByAuthorityId(context, dcValue.getAuthority());
                 }
 
                 if (project != null) {

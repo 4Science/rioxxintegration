@@ -1,13 +1,7 @@
-/**
- * The contents of this file are subject to the license and copyright
- * detailed in the LICENSE and NOTICE files at the root of the source
- * tree and available online at
- *
- * http://www.dspace.org/license/
- */
 package com.atmire.utils;
 
 import org.dspace.content.MetadataField;
+import org.dspace.content.MetadataValue;
 
 /**
  * Created by Roeland Dillen (roeland at atmire dot com)
@@ -17,10 +11,9 @@ import org.dspace.content.MetadataField;
 public class Metadatum {
 
 
-    private String schema;
-    private String element;
-    private String qualifier = null;
-
+    public String schema;
+    public String element;
+    public String qualifier = null;
 
     @Override
     public String toString() {
@@ -33,8 +26,8 @@ public class Metadatum {
         return sb.toString();
     }
 
-    public Metadatum(org.dspace.content.Metadatum value){
-        this(value.schema,value.element,value.qualifier);
+    public Metadatum(MetadataValue value){
+        this(value.getMetadataField().getMetadataSchema().getName(),value.getMetadataField().getElement(),value.getMetadataField().getQualifier());
     }
 
     public Metadatum(String schema, String element, String qualifier) {

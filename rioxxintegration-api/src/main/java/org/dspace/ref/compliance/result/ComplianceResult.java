@@ -1,15 +1,13 @@
-/**
- * The contents of this file are subject to the license and copyright
- * detailed in the LICENSE and NOTICE files at the root of the source
- * tree and available online at
- *
- * http://www.dspace.org/license/
- */
 package org.dspace.ref.compliance.result;
 
-import org.dspace.util.subclasses.Metadata;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
-import java.util.*;
+import org.dspace.util.subclasses.Metadata;
 
 /**
  * Model class that represents the result of a compliance check
@@ -67,7 +65,7 @@ public class ComplianceResult {
     public void addEstimatedValues(List<Metadata> fakeFields) {
         for (Metadata fakeField : fakeFields)
         {
-            estimatedValues.put(fakeField.getField(), fakeField.getValue());
+            estimatedValues.put(fakeField.toString(), fakeField.getValue());
         }
     }
 

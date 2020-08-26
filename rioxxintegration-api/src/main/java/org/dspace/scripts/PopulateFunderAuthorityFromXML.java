@@ -1,14 +1,12 @@
-/**
- * The contents of this file are subject to the license and copyright
- * detailed in the LICENSE and NOTICE files at the root of the source
- * tree and available online at
- *
- * http://www.dspace.org/license/
- */
 package org.dspace.scripts;
 
-import java.io.*;
-import org.dspace.authority.*;
+import java.io.File;
+
+import org.dspace.authority.AuthorityValue;
+import org.dspace.authority.FunderAuthorityValue;
+import org.dspace.authority.FunderXmlFileParser;
+import org.dspace.authority.service.AuthorityValueService;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * Created by: Antoine Snyers (antoine at atmire dot com)
@@ -16,6 +14,9 @@ import org.dspace.authority.*;
  */
 public class PopulateFunderAuthorityFromXML extends PopulateAuthorityFromXML<FunderAuthorityValue> {
 
+    @Autowired(required = true)
+    protected AuthorityValueService authorityValueService;
+    
     public static void main(String[] args) {
         PopulateFunderAuthorityFromXML script = new PopulateFunderAuthorityFromXML();
         script.mainImpl(args);
@@ -24,8 +25,7 @@ public class PopulateFunderAuthorityFromXML extends PopulateAuthorityFromXML<Fun
     @Override
     protected AuthorityValue findCachedRecord(FunderAuthorityValue value)
     {
-        AuthorityValueFinder authorityValueFinder = new AuthorityValueFinder();
-        AuthorityValue cachedRecord = authorityValueFinder.findByFunderID(null, value.getFunderID());
+        AuthorityValue cachedRecord = authorityValueService.findByFunderID(null, value.getFunderID());
         return cachedRecord;
     }
 

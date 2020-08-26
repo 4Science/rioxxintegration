@@ -7,14 +7,24 @@
  */
 package org.dspace.app.util;
 
-import java.io.*;
-import java.util.*;
-import javax.servlet.*;
-import javax.xml.parsers.*;
-import org.apache.log4j.*;
-import org.dspace.core.*;
-import org.w3c.dom.*;
-import org.xml.sax.*;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.ServletException;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.FactoryConfigurationError;
+
+import org.apache.log4j.Logger;
+import org.dspace.services.factory.DSpaceServicesFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 /**
  * Item Submission configuration generator for DSpace. Reads and parses the
@@ -55,8 +65,10 @@ public class SubmissionConfigReader
     private static Logger log = Logger.getLogger(SubmissionConfigReader.class);
 
 	/** The fully qualified pathname of the directory containing the Item Submission Configuration file */
-    private String configDir = ConfigurationManager.getProperty("dspace.dir")
+    private String configDir = DSpaceServicesFactory.getInstance()
+            .getConfigurationService().getProperty("dspace.dir")
             + File.separator + "config" + File.separator;
+            
             
     /**
      * Hashmap which stores which submission process configuration is used by
@@ -201,6 +213,59 @@ public class SubmissionConfigReader
         return lastSubmissionConfig;
     }
 
+    public SubmissionConfig getSubmissionConfig(String collectionHandle,
+            boolean isWorkflow) throws ServletException
+    {
+        // get the name of the submission process config for this collection
+        String submitName = collectionToSubmissionConfig
+                .get(collectionHandle);
+        if (submitName == null)
+        {
+            submitName = collectionToSubmissionConfig
+                    .get(DEFAULT_COLLECTION);
+        }
+        if (submitName == null)
+        {
+            throw new ServletException(
+                    "No item submission process configuration designated as 'default' in 'submission-map' section of 'item-submission.xml'.");
+        }
+
+        log.debug("Loading submission process config named '" + submitName
+                + "'");
+
+        // check mini-cache, and return if match
+        if (lastSubmissionConfig != null
+                && lastSubmissionConfig.getSubmissionName().equals(submitName)
+                && lastSubmissionConfig.isWorkflow() == isWorkflow)
+        {
+            log.debug("Found submission process config '" + submitName
+                    + "' in cache.");
+
+            return lastSubmissionConfig;
+        }
+
+        // cache miss - construct new SubmissionConfig
+        List<Map<String, String>> steps = submitDefns.get(submitName);
+
+        if (steps == null)
+        {
+            throw new ServletException(
+                    "Missing the Item Submission process config '" + submitName
+                            + "' (or unable to load) from 'item-submission.xml'.");
+        }
+
+        log.debug("Submission process config '" + submitName
+                + "' not in cache. Reloading from scratch.");
+
+        lastSubmissionConfig = new SubmissionConfig(submitName, steps,
+                isWorkflow);
+
+        log.debug("Submission process config has "
+                + lastSubmissionConfig.getNumberOfSteps() + " steps listed.");
+
+        return lastSubmissionConfig;
+    }
+    
     /**
      * Returns a particular global step definition based on its ID.
      * <P>

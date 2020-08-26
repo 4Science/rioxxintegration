@@ -1,18 +1,12 @@
-/**
- * The contents of this file are subject to the license and copyright
- * detailed in the LICENSE and NOTICE files at the root of the source
- * tree and available online at
- *
- * http://www.dspace.org/license/
- */
 package org.dspace.util;
 
-import java.util.*;
-import org.apache.commons.lang.*;
-import org.dspace.app.util.*;
-import org.dspace.content.*;
-import org.dspace.content.authority.*;
-import org.dspace.util.subclasses.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import org.apache.commons.lang.StringUtils;
+import org.dspace.content.authority.Choices;
+import org.dspace.util.subclasses.Metadata;
 
 /**
  * metadataFieldString = schema.element.qualifier[language]::authority::confidence
@@ -116,41 +110,6 @@ public class MetadataFieldString {
         return parsed;
     }
 
-    public static String representing(Metadatum dcValue) {
-        StringBuilder builder = new StringBuilder();
-        builder.append(StringUtils.isNotBlank(dcValue.schema) ? dcValue.schema : Item.ANY)
-                .append(SIGNATURE_SEPARATOR)
-                .append(StringUtils.isNotBlank(dcValue.element) ? dcValue.element : Item.ANY);
-        if (StringUtils.isNotBlank(dcValue.qualifier)) {
-            builder.append(SIGNATURE_SEPARATOR).append(dcValue.qualifier);
-        }
-        if (StringUtils.isNotBlank(dcValue.language)) {
-            builder.append('[').append(dcValue.language).append(']');
-        }
-        if (StringUtils.isNotBlank(dcValue.authority)) {
-            builder.append(AUTHORITY_SEPARATOR).append(dcValue.authority);
-            builder.append(AUTHORITY_SEPARATOR).append(dcValue.confidence);
-        }
-        return builder.toString();
-    }
-
-    public static String representing(DCInput input) {
-        StringBuilder builder = new StringBuilder();
-        builder.append(StringUtils.isNotBlank(input.getSchema()) ? input.getSchema() : Item.ANY)
-                .append(SIGNATURE_SEPARATOR)
-                .append(StringUtils.isNotBlank(input.getElement()) ? input.getElement() : Item.ANY);
-        if (StringUtils.isNotBlank(input.getQualifier())) {
-            builder.append(SIGNATURE_SEPARATOR).append(input.getQualifier());
-        }
-        return builder.toString();
-    }
-
-    public static Metadata encapsulate(String metadataFieldString, boolean noSchema) {
-        if (noSchema) {
-            metadataFieldString = "bogus" + SIGNATURE_SEPARATOR + metadataFieldString;
-        }
-        return encapsulate(metadataFieldString);
-    }
 
     public static Metadata encapsulate(String metadataFieldString) {
         String schema = getSchema(metadataFieldString);
@@ -160,5 +119,15 @@ public class MetadataFieldString {
         String authority = getAuthority(metadataFieldString);
         int confidence = getConfidence(metadataFieldString);
         return new Metadata(schema, element, qualifier, language, null, authority, confidence);
+    }
+    
+    public static Metadata encapsulate(String metadataFieldString, String value) {
+        String schema = getSchema(metadataFieldString);
+        String element = getElement(metadataFieldString);
+        String qualifier = getQualifier(metadataFieldString);
+        String language = getLanguage(metadataFieldString);
+        String authority = getAuthority(metadataFieldString);
+        int confidence = getConfidence(metadataFieldString);
+        return new Metadata(schema, element, qualifier, language, value, authority, confidence);
     }
 }

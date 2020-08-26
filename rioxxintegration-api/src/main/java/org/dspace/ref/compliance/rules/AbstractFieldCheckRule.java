@@ -1,10 +1,3 @@
-/**
- * The contents of this file are subject to the license and copyright
- * detailed in the LICENSE and NOTICE files at the root of the source
- * tree and available online at
- *
- * http://www.dspace.org/license/
- */
 package org.dspace.ref.compliance.rules;
 
 import java.util.*;
@@ -32,7 +25,7 @@ public abstract class AbstractFieldCheckRule extends AbstractComplianceRule {
             return false;
         } else {
             try {
-                List<Metadatum> fieldValueList = getMetadata(context, item, metadataFieldToCheck);
+                List<String> fieldValueList = getMetadata(context, item, metadataFieldToCheck);
                 return checkFieldValues(fieldValueList);
 
             } catch(IllegalArgumentException ex) {
@@ -42,5 +35,5 @@ public abstract class AbstractFieldCheckRule extends AbstractComplianceRule {
         }
     }
 
-    abstract protected boolean checkFieldValues(final List<Metadatum> fieldValueList);
+    abstract protected boolean checkFieldValues(final List<String> fieldValueList);
 }

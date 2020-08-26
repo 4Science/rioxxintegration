@@ -1,16 +1,7 @@
-/**
- * The contents of this file are subject to the license and copyright
- * detailed in the LICENSE and NOTICE files at the root of the source
- * tree and available online at
- *
- * http://www.dspace.org/license/
- */
 package org.dspace.scripts;
 
 import org.apache.commons.cli.CommandLine;
 import org.dspace.core.Context;
-
-import java.sql.SQLException;
 
 /**
  * Created by: Antoine Snyers (antoine at atmire dot com)
@@ -41,7 +32,7 @@ public class ContextScript extends Script {
 
             super.mainImpl(args);
 
-        } catch (SQLException e) {
+        } catch (Exception e) {
             printAndLogError(e);
         } finally {
             if (context != null) {

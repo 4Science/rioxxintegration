@@ -1,10 +1,3 @@
-/**
- * The contents of this file are subject to the license and copyright
- * detailed in the LICENSE and NOTICE files at the root of the source
- * tree and available online at
- *
- * http://www.dspace.org/license/
- */
 package org.dspace.app.xmlui.aspect.compliance;
 
 import com.atmire.authorization.AuthorizationChecker;
@@ -38,8 +31,10 @@ public class Navigation extends AbstractDSpaceTransformer implements CacheablePr
     private static final Message T_head_compliance =
             message("xmlui.Compliance.Navigation.head_compliance");
 
-    private java.util.List<ComplianceUI> complianceUIs = new DSpace().getServiceManager().getServicesByType(ComplianceUI.class);
+    private java.util.List<ComplianceUI> complianceUIs;
 
+    private AuthorizationChecker complianceAuthorizationChecker;
+    
     /**
      * Generate the unique caching key.
      * This key must be unique inside the space of this component.
@@ -84,13 +79,11 @@ public class Navigation extends AbstractDSpaceTransformer implements CacheablePr
         options.addList("administrative");
         DSpaceObject dso = HandleUtil.obtainHandle(objectModel);
 
-        AuthorizationChecker complianceAuthorizationChecker = new DSpace().getServiceManager().getServiceByName("ComplianceAuthorizationChecker", AuthorizationChecker.class);
-
         boolean isItemAndArchived = dso instanceof Item && ((Item) dso).isArchived();
-        if (isItemAndArchived && complianceAuthorizationChecker.checkAuthorization(this.context, dso)) {
+        if (isItemAndArchived && getComplianceAuthorizationChecker().checkAuthorization(this.context, dso)) {
             compliance.setHead(T_head_compliance);
 
-            for (ComplianceUI complianceUI : complianceUIs) {
+            for (ComplianceUI complianceUI : getComplianceUIs()) {
             	if(complianceUI.isEnabled()) {
 	                if(org.apache.commons.lang3.StringUtils.isNotBlank(complianceUI.getNavigationKey())) {
 	                    compliance.addItemXref(contextPath + "/handle/" + dso.getHandle() + "/" + complianceUI.getIdentifier()
@@ -102,6 +95,27 @@ public class Navigation extends AbstractDSpaceTransformer implements CacheablePr
 
     }
 
+	public java.util.List<ComplianceUI> getComplianceUIs() {
+		if(complianceUIs == null) {
+			complianceUIs = new DSpace().getServiceManager().getServicesByType(ComplianceUI.class);
+		}
+		return complianceUIs;
+	}
+
+	public void setComplianceUIs(java.util.List<ComplianceUI> complianceUIs) {
+		this.complianceUIs = complianceUIs;
+	}
+
+	public AuthorizationChecker getComplianceAuthorizationChecker() {
+		if(complianceAuthorizationChecker == null) {
+			complianceAuthorizationChecker = new DSpace().getServiceManager().getServiceByName("ComplianceAuthorizationChecker",AuthorizationChecker.class);
+		}
+		return complianceAuthorizationChecker;
+	}
+
+	public void setComplianceAuthorizationChecker(AuthorizationChecker complianceCheckService) {
+		this.complianceAuthorizationChecker = complianceCheckService;
+	}
 }
 
 

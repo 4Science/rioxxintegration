@@ -1,18 +1,15 @@
-/**
- * The contents of this file are subject to the license and copyright
- * detailed in the LICENSE and NOTICE files at the root of the source
- * tree and available online at
- *
- * http://www.dspace.org/license/
- */
 package org.dspace.ref.compliance.rules.script;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.apache.commons.collections.CollectionUtils;
 import org.dspace.content.DSpaceObject;
 import org.dspace.content.Item;
-import org.dspace.handle.HandleManager;
+import org.dspace.handle.factory.HandleServiceFactory;
+import org.dspace.handle.service.HandleService;
 import org.dspace.ref.compliance.result.CategoryComplianceResult;
 import org.dspace.ref.compliance.result.ComplianceResult;
 import org.dspace.ref.compliance.result.RuleComplianceResult;
@@ -20,9 +17,6 @@ import org.dspace.ref.compliance.service.ComplianceCheckService;
 import org.dspace.scripts.ContextScript;
 import org.dspace.scripts.Script;
 import org.dspace.utils.DSpace;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Utility script to check for a given handle if the corresponding item is compliant with the validation rules
@@ -70,7 +64,8 @@ public class CheckItemComplianceScript extends ContextScript {
     @Override
     public void run() throws Exception {
         print("Checking REF compliance of item with handle " + itemHandle);
-        DSpaceObject object = HandleManager.resolveToObject(context, itemHandle);
+        HandleService handleService = HandleServiceFactory.getInstance().getHandleService();
+        DSpaceObject object = handleService.resolveToObject(context, itemHandle);
 
         if (object != null && object instanceof Item) {
             Item item = (Item) object;

@@ -1,10 +1,3 @@
-/**
- * The contents of this file are subject to the license and copyright
- * detailed in the LICENSE and NOTICE files at the root of the source
- * tree and available online at
- *
- * http://www.dspace.org/license/
- */
 package org.dspace.ref.compliance.rules;
 
 import java.sql.*;
@@ -76,7 +69,7 @@ public class CountGreaterThanRule extends AbstractComplianceRule {
     }
 
     private int countFieldValues(final Context context, final Item item) throws SQLException {
-        List<Metadatum> fieldValueList = getMetadata(context, item, fieldToCheck);
+        List<String> fieldValueList = getMetadata(context, item, fieldToCheck);
         return CollectionUtils.size(fieldValueList);
     }
 

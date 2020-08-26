@@ -1,17 +1,14 @@
-/**
- * The contents of this file are subject to the license and copyright
- * detailed in the LICENSE and NOTICE files at the root of the source
- * tree and available online at
- *
- * http://www.dspace.org/license/
- */
 package com.atmire.swordapp.server;
 
 import com.atmire.swordapp.server.util.*;
 import java.util.*;
 import org.apache.abdera.model.*;
 import org.apache.commons.lang.*;
+import org.dspace.authority.factory.AuthorityServiceFactory;
+import org.dspace.authority.service.AuthorityValueService;
 import org.dspace.content.authority.*;
+import org.dspace.content.authority.factory.ContentAuthorityServiceFactory;
+import org.dspace.content.authority.service.MetadataAuthorityService;
 import org.dspace.core.*;
 import org.swordapp.server.*;
 
@@ -19,7 +16,9 @@ public class RioxxSwordEntry extends SwordEntry {
 
     protected HashMap<String, String> dcMap = null;
     List<String> acceptedNamespaces = new LinkedList<>();
-
+    
+    private MetadataAuthorityService metadataAuthorityService = ContentAuthorityServiceFactory.getInstance().getMetadataAuthorityService();
+    		
     public RioxxSwordEntry(Entry entry) {
         super(entry);
         SimpleRioxxMetadataHelper simpleRioxxMetadataHelper = new SimpleRioxxMetadataHelper();
@@ -67,7 +66,7 @@ public class RioxxSwordEntry extends SwordEntry {
 
         String id = element.getAttributeValue("id");
         if (StringUtils.isNotBlank(id)) {
-            if (MetadataAuthorityManager.getManager().isAuthorityControlled(dcMap.get(field).replace(".", "_"))) {
+            if (metadataAuthorityService.isAuthorityControlled(dcMap.get(field).replace(".", "_"))) {
                 value = id + "::" + value;
 
                 String email = element.getAttributeValue("email");

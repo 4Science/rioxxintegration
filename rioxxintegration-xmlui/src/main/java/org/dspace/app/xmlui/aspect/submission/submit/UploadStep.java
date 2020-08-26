@@ -7,31 +7,54 @@
  */
 package org.dspace.app.xmlui.aspect.submission.submit;
 
-import java.io.*;
-import java.sql.*;
-import java.util.*;
-import org.apache.avalon.framework.parameters.*;
-import org.apache.cocoon.*;
-import org.apache.cocoon.environment.*;
-import org.apache.commons.collections.*;
-import org.apache.commons.lang3.*;
-import org.apache.log4j.*;
-import org.dspace.app.sherpa.*;
-import org.dspace.app.sherpa.submit.*;
-import org.dspace.app.util.*;
-import org.dspace.app.xmlui.aspect.submission.*;
-import org.dspace.app.xmlui.utils.*;
-import org.dspace.app.xmlui.wing.*;
-import org.dspace.app.xmlui.wing.element.*;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+
+import org.apache.avalon.framework.parameters.Parameters;
+import org.apache.cocoon.ProcessingException;
+import org.apache.cocoon.environment.SourceResolver;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.log4j.Logger;
+import org.dspace.app.sherpa.SHERPAJournal;
+import org.dspace.app.sherpa.SHERPAPublisher;
+import org.dspace.app.sherpa.SHERPAResponse;
+import org.dspace.app.sherpa.submit.SHERPASubmitService;
+import org.dspace.app.util.DCInputsReader;
+import org.dspace.app.util.DCInputsReaderException;
+import org.dspace.app.util.Util;
+import org.dspace.app.xmlui.aspect.submission.AbstractSubmissionStep;
+import org.dspace.app.xmlui.utils.UIException;
+import org.dspace.app.xmlui.wing.Message;
+import org.dspace.app.xmlui.wing.WingException;
+import org.dspace.app.xmlui.wing.element.Body;
+import org.dspace.app.xmlui.wing.element.Button;
+import org.dspace.app.xmlui.wing.element.Cell;
+import org.dspace.app.xmlui.wing.element.CheckBox;
+import org.dspace.app.xmlui.wing.element.Division;
 import org.dspace.app.xmlui.wing.element.File;
 import org.dspace.app.xmlui.wing.element.List;
-import org.dspace.authorize.*;
-import org.dspace.content.*;
+import org.dspace.app.xmlui.wing.element.Radio;
+import org.dspace.app.xmlui.wing.element.Row;
+import org.dspace.app.xmlui.wing.element.Table;
+import org.dspace.app.xmlui.wing.element.Text;
+import org.dspace.authorize.AuthorizeException;
+import org.dspace.content.Bitstream;
+import org.dspace.content.BitstreamFormat;
+import org.dspace.content.Bundle;
 import org.dspace.content.Collection;
 import org.dspace.content.Item;
-import org.dspace.core.*;
-import org.dspace.utils.*;
-import org.xml.sax.*;
+import org.dspace.content.factory.ContentServiceFactory;
+import org.dspace.content.service.ItemService;
+import org.dspace.core.ConfigurationManager;
+import org.dspace.utils.DSpace;
+import org.xml.sax.SAXException;
 
 /**
  * This is a step of the item submission processes. The upload
@@ -133,6 +156,8 @@ public class UploadStep extends AbstractSubmissionStep
      * (this is used when a user requests to edit a bitstream)
      **/
     private EditFileStep editFile = null;
+    
+    protected ItemService itemService = ContentServiceFactory.getInstance().getItemService();
 
     /**
      * Establish our required parameters, abstractStep will enforce these.
@@ -182,11 +207,11 @@ public class UploadStep extends AbstractSubmissionStep
         Collection collection = submission.getCollection();
         String actionURL = contextPath + "/handle/"+collection.getHandle() + "/submit/" + knot.getId() + ".continue";
         boolean disableFileEditing = (submissionInfo.isInWorkflow()) && !ConfigurationManager.getBooleanProperty("workflow", "reviewer.file-edit");
-        Bundle[] bundles = item.getBundles("ORIGINAL");
-        Bitstream[] bitstreams = new Bitstream[0];
-        if (bundles.length > 0)
+        java.util.List<Bundle> bundles = item.getBundles("ORIGINAL");
+        java.util.List<Bitstream> bitstreams = new ArrayList<>();
+        if (bundles.size() > 0)
         {
-            bitstreams = bundles[0].getBitstreams();
+            bitstreams = bundles.get(0).getBitstreams();
         }
 
         // Part A:
@@ -244,9 +269,9 @@ public class UploadStep extends AbstractSubmissionStep
 
         // Part B:
         //  If the user has already uploaded files provide a list for the user.
-        if (bitstreams.length > 0 || disableFileEditing)
+        if (bitstreams.size() > 0 || disableFileEditing)
         {
-            Table summary = div.addTable("submit-upload-summary",(bitstreams.length * 2) + 2,7);
+            Table summary = div.addTable("submit-upload-summary",(bitstreams.size() * 2) + 2,7);
             summary.setHead(T_head2);
 
             Row header = summary.addRow(Row.ROLE_HEADER);
@@ -260,7 +285,7 @@ public class UploadStep extends AbstractSubmissionStep
 
             for (Bitstream bitstream : bitstreams)
             {
-                int id = bitstream.getID();
+                UUID id = bitstream.getID();
                 String name = bitstream.getName();
                 String url = makeBitstreamLink(item, bitstream);
                 long bytes = bitstream.getSize();
@@ -277,7 +302,7 @@ public class UploadStep extends AbstractSubmissionStep
 
                 // If this bitstream is already marked as the primary bitstream
                 // mark it as such.
-                if(bundles[0].getPrimaryBitstreamID() == id) {
+                if(bundles.get(0).getPrimaryBitstream() != null && bundles.get(0).getPrimaryBitstream().getID().equals(id)) {
                     primary.setOptionSelected(String.valueOf(id));
                 }
 
@@ -286,7 +311,7 @@ public class UploadStep extends AbstractSubmissionStep
                     // Workflow users can not remove files.
                     CheckBox remove = row.addCell().addCheckBox("remove");
                     remove.setLabel("remove");
-                    remove.addOption(id);
+                    remove.addOption(id.toString());
                 }
                 else
                 {
@@ -304,7 +329,7 @@ public class UploadStep extends AbstractSubmissionStep
                     row.addCellContent(desc);
                 }
 
-                BitstreamFormat format = bitstream.getFormat();
+                BitstreamFormat format = bitstream.getFormat(context);
                 if (format == null)
                 {
                     row.addCellContent(T_unknown_format);
@@ -444,16 +469,16 @@ public class UploadStep extends AbstractSubmissionStep
 
         // Review all uploaded files
         Item item = submission.getItem();
-        Bundle[] bundles = item.getBundles("ORIGINAL");
-        Bitstream[] bitstreams = new Bitstream[0];
-        if (bundles.length > 0)
+        java.util.List<Bundle> bundles = itemService.getBundles(item, "ORIGINAL");
+        java.util.List<Bitstream> bitstreams = new ArrayList<>();
+        if (bundles.size() > 0)
         {
-            bitstreams = bundles[0].getBitstreams();
+            bitstreams = bundles.get(0).getBitstreams();
         }
 
         for (Bitstream bitstream : bitstreams)
         {
-            BitstreamFormat bitstreamFormat = bitstream.getFormat();
+        	BitstreamFormat bitstreamFormat = bitstream.getFormat(context);
 
             String name = bitstream.getName();
             String url = makeBitstreamLink(item, bitstream);
@@ -511,7 +536,7 @@ public class UploadStep extends AbstractSubmissionStep
     }
 
     public void addRioxxVersionSection(List upload,Item item) throws WingException {
-        String version = item.getMetadata("rioxxterms.version");
+        String version = itemService.getMetadata(item, "rioxxterms.version");
 
         if(StringUtils.isNotBlank(version) && !"NA".equals(version)) {
             try {

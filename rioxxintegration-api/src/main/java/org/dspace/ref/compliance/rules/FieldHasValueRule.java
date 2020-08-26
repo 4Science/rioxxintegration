@@ -1,10 +1,3 @@
-/**
- * The contents of this file are subject to the license and copyright
- * detailed in the LICENSE and NOTICE files at the root of the source
- * tree and available online at
- *
- * http://www.dspace.org/license/
- */
 package org.dspace.ref.compliance.rules;
 
 import java.util.Collection;
@@ -34,16 +27,16 @@ public class FieldHasValueRule extends AbstractFieldCheckRule {
         }
     }
 
-    protected boolean checkFieldValues(final List<Metadatum> fieldValueList) {
+    protected boolean checkFieldValues(final List<String> fieldValueList) {
 
         if (isEmpty(fieldValueList)) {
             addViolationDescription("The %s field has no value", fieldDescription);
             return false;
-        } else if(possibleValues.containsKey(fieldValueList.get(0).value)) {
-            checkedCompliantValue = possibleValues.get(fieldValueList.get(0).value);
+        } else if(possibleValues.containsKey(fieldValueList.get(0))) {
+            checkedCompliantValue = possibleValues.get(fieldValueList.get(0));
             return true;
         } else {
-            addViolationDescription("The %s field has value %s", fieldDescription, fieldValueList.get(0).value);
+            addViolationDescription("The %s field has value %s", fieldDescription, fieldValueList.get(0));
             return false;
         }
     }

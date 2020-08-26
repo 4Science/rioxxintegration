@@ -1,11 +1,9 @@
-/**
- * The contents of this file are subject to the license and copyright
- * detailed in the LICENSE and NOTICE files at the root of the source
- * tree and available online at
- *
- * http://www.dspace.org/license/
- */
 package org.dspace.app.xmlui.aspect.submission.submit;
+
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.Map;
+import java.util.UUID;
 
 import org.apache.avalon.framework.parameters.Parameters;
 import org.apache.cocoon.ProcessingException;
@@ -18,23 +16,29 @@ import org.dspace.app.xmlui.aspect.submission.AbstractSubmissionStep;
 import org.dspace.app.xmlui.utils.UIException;
 import org.dspace.app.xmlui.wing.Message;
 import org.dspace.app.xmlui.wing.WingException;
-import org.dspace.app.xmlui.wing.element.*;
+import org.dspace.app.xmlui.wing.element.Body;
+import org.dspace.app.xmlui.wing.element.Division;
+import org.dspace.app.xmlui.wing.element.Instance;
+import org.dspace.app.xmlui.wing.element.List;
+import org.dspace.app.xmlui.wing.element.PageMeta;
+import org.dspace.app.xmlui.wing.element.Row;
+import org.dspace.app.xmlui.wing.element.Table;
+import org.dspace.app.xmlui.wing.element.Text;
 import org.dspace.authority.DefaultAuthorityCreator;
 import org.dspace.authority.ProjectAuthorityValue;
 import org.dspace.authorize.AuthorizeException;
 import org.dspace.content.Collection;
 import org.dspace.content.Item;
-import org.dspace.content.Metadatum;
-import org.dspace.content.authority.ChoiceAuthorityManager;
-import org.dspace.content.authority.MetadataAuthorityManager;
+import org.dspace.content.MetadataValue;
+import org.dspace.content.authority.factory.ContentAuthorityServiceFactory;
+import org.dspace.content.authority.service.ChoiceAuthorityService;
+import org.dspace.content.authority.service.MetadataAuthorityService;
+import org.dspace.content.factory.ContentServiceFactory;
+import org.dspace.content.service.ItemService;
 import org.dspace.core.ConfigurationManager;
 import org.dspace.project.ProjectService;
 import org.dspace.utils.DSpace;
 import org.xml.sax.SAXException;
-
-import java.io.IOException;
-import java.sql.SQLException;
-import java.util.Map;
 
 /**
  * Created by Philip Vissenaekens (philip at atmire dot com)
@@ -64,16 +68,22 @@ public class ProjectStep extends AbstractSubmissionStep {
     private String defaultProject;
     private String defaultFunder;
 
-    private DefaultAuthorityCreator defaultAuthorityCreator = new DSpace().getServiceManager().getServiceByName("defaultAuthorityCreator", DefaultAuthorityCreator.class);
-    private ProjectService projectService = new DSpace().getServiceManager().getServiceByName("ProjectService", ProjectService.class);
+    private DefaultAuthorityCreator defaultAuthorityCreator;
+    private ProjectService projectService;
 
+    protected ItemService itemService = ContentServiceFactory.getInstance().getItemService();
+
+    protected ChoiceAuthorityService choiceAuthorityService = ContentAuthorityServiceFactory.getInstance().getChoiceAuthorityService();
+
+    protected MetadataAuthorityService metadataAuthorityService = ContentAuthorityServiceFactory.getInstance().getMetadataAuthorityService();
+    
     @Override
     public void setup(SourceResolver resolver, Map objectModel, String src, Parameters parameters) throws ProcessingException, SAXException, IOException {
         super.setup(resolver, objectModel, src, parameters);
         Request request = ObjectModelHelper.getRequest(objectModel);
         newProject = (ProjectAuthorityValue) request.getSession().getAttribute("newProject");
 
-        ProjectAuthorityValue project = defaultAuthorityCreator.retrieveDefaultProject(context);
+        ProjectAuthorityValue project = getDefaultAuthorityCreator().retrieveDefaultProject(context);
 
         if(project!=null) {
             defaultFunder = project.getFunderAuthorityValue().getValue();
@@ -89,7 +99,7 @@ public class ProjectStep extends AbstractSubmissionStep {
             UIException, SQLException, IOException, AuthorizeException
     {
         super.addPageMeta(pageMeta);
-        int collectionID = submission.getCollection().getID();
+        UUID collectionID = submission.getCollection().getID();
         pageMeta.addMetadata("choice", "collection").addContent(String.valueOf(collectionID));
         pageMeta.addMetadata("stylesheet", "screen", "datatables", true).addContent("../../static/Datatables/DataTables-1.8.0/media/css/datatables.css");
         pageMeta.addMetadata("javascript", "static", "datatables", true).addContent("static/Datatables/DataTables-1.8.0/media/js/jquery.dataTables.min.js");
@@ -125,7 +135,7 @@ public class ProjectStep extends AbstractSubmissionStep {
 
         form.addItem("project_funder_help","").addContent(T_project_funder_hint.parameterize(ConfigurationManager.getProperty("mail.admin")));
 
-        Metadatum[] dcValues = item.getMetadata("rioxxterms", "identifier", "project", Item.ANY);
+        java.util.List<MetadataValue> dcValues = itemService.getMetadata(item, "rioxxterms", "identifier", "project", Item.ANY);
 
         form.addItem().addButton("submit_add").setValue(T_add);
 
@@ -140,8 +150,8 @@ public class ProjectStep extends AbstractSubmissionStep {
     }
 
     private void addFundersWithoutAuthorityField(final Division div, final Item item) throws WingException {
-        Metadatum[] dcValues = item.getMetadata("dc", "description", "sponsorship", Item.ANY);
-        String fieldName = MetadataAuthorityManager.makeFieldKey("dc", "description", "sponsorship");
+        java.util.List<MetadataValue> dcValues = itemService.getMetadata(item, "dc", "description", "sponsorship", Item.ANY);
+        String fieldName = metadataAuthorityService.makeFieldKey("dc", "description", "sponsorship");
 
         List fundersWithoutAuthorityList = div.addList("funders-without-authority", List.TYPE_FORM);
 
@@ -156,24 +166,24 @@ public class ProjectStep extends AbstractSubmissionStep {
         if (isFieldInError(fieldName)) {
             text.addError(T_required_field);
         }
-        if (dcValues.length > 1) {
+        if (dcValues.size() > 1) {
         }
 
         // Setup the field's values
-        if (dcValues.length >= 1) {
+        if (dcValues.size() >= 1) {
             text.enableDeleteOperation();
-            for (Metadatum dcValue : dcValues) {
+            for (MetadataValue dcValue : dcValues) {
                 Instance ti = text.addInstance();
-                ti.setValue(dcValue.value);
+                ti.setValue(dcValue.getValue());
             }
         }
     }
 
-    private void renderResults(Division div, Metadatum[] dcValues) throws WingException {
-        if (dcValues != null && dcValues.length > 0) {
+    private void renderResults(Division div, java.util.List<MetadataValue> dcValues) throws WingException {
+        if (dcValues != null && dcValues.size() > 0) {
             Division projectDiv = div.addDivision("projects");
 
-            Table table = projectDiv.addTable("project-table", 3, dcValues.length + 1);
+            Table table = projectDiv.addTable("project-table", 3, dcValues.size() + 1);
             Row header = table.addRow(Row.ROLE_HEADER);
             header.addCell().addContent(T_project_label);
             header.addCell().addContent(T_funder_label);
@@ -181,12 +191,12 @@ public class ProjectStep extends AbstractSubmissionStep {
 
             int count = 0;
 
-            for (Metadatum dcValue : dcValues) {
+            for (MetadataValue dcValue : dcValues) {
                 ProjectAuthorityValue project;
-                if (newProject != null && newProject.getId().equals(dcValue.authority)) {
+                if (newProject != null && newProject.getId().equals(dcValue.getAuthority())) {
                     project = newProject;
                 } else {
-                    project = projectService.getProjectByAuthorityId(context, dcValue.authority);
+                    project = getProjectService().getProjectByAuthorityId(context, dcValue.getAuthority());
                 }
 
                 if (project != null) {
@@ -250,15 +260,13 @@ public class ProjectStep extends AbstractSubmissionStep {
         List projectSection = reviewList.addList("submit-review-" + this.stepAndPage, List.TYPE_FORM);
         projectSection.setHead(T_head);
 
-        Metadatum[] dcValues = submission.getItem().getMetadata("rioxxterms", "identifier", "project", Item.ANY);
+        java.util.List<MetadataValue> dcValues = itemService.getMetadata(submission.getItem(), "rioxxterms", "identifier", "project", Item.ANY);
 
-        for (Metadatum dcValue : dcValues) {
+        for (MetadataValue dcValue : dcValues) {
             org.dspace.app.xmlui.wing.element.Item project = projectSection.addItem();
 
-            ProjectService projectService = new DSpace().getServiceManager().getServiceByName("ProjectService", ProjectService.class);
-
             try {
-                ProjectAuthorityValue projectAuthorityValue = projectService.getProjectByAuthorityId(context, dcValue.authority);
+                ProjectAuthorityValue projectAuthorityValue = getProjectService().getProjectByAuthorityId(context, dcValue.getAuthority());
 
                 project.addContent(projectAuthorityValue.getValue() + " - " + projectAuthorityValue.getFunderAuthorityValue().getValue());
             }
@@ -269,13 +277,36 @@ public class ProjectStep extends AbstractSubmissionStep {
 
         boolean enableDcSponsorship = ConfigurationManager.getBooleanProperty("rioxx", "submission.funder.enableDcSponsorship");
         if(enableDcSponsorship) {
-            dcValues = submission.getItem().getMetadata("dc", "description", "sponsorship", Item.ANY);
-            for (Metadatum dcValue : dcValues) {
+            dcValues = itemService.getMetadata(submission.getItem(), "dc", "description", "sponsorship", Item.ANY);
+            for (MetadataValue dcValue : dcValues) {
                 org.dspace.app.xmlui.wing.element.Item funder = projectSection.addItem();
-                funder.addContent(dcValue.value);
+                funder.addContent(dcValue.getValue());
             }
         }
 
         return projectSection;
     }
+
+	public DefaultAuthorityCreator getDefaultAuthorityCreator() {
+	    if(defaultAuthorityCreator == null) {
+	    	defaultAuthorityCreator = new DSpace().getServiceManager().getServiceByName("defaultAuthorityCreator", DefaultAuthorityCreator.class);
+	    }
+		return defaultAuthorityCreator;
+	}
+
+	public void setDefaultAuthorityCreator(DefaultAuthorityCreator defaultAuthorityCreator) {
+		this.defaultAuthorityCreator = defaultAuthorityCreator;
+	}
+
+	public ProjectService getProjectService() {
+		if(projectService == null) {
+			projectService = new DSpace().getServiceManager().getServiceByName("ProjectService", ProjectService.class);
+		}
+		return projectService;
+	}
+
+	public void setProjectService(ProjectService projectService) {
+		this.projectService = projectService;
+	}
+
 }

@@ -1,10 +1,3 @@
-/**
- * The contents of this file are subject to the license and copyright
- * detailed in the LICENSE and NOTICE files at the root of the source
- * tree and available online at
- *
- * http://www.dspace.org/license/
- */
 package com.atmire.ref.compliance.submission;
 
 import org.apache.commons.lang3.StringUtils;
@@ -12,9 +5,11 @@ import org.dspace.app.util.SubmissionInfo;
 import org.dspace.app.util.Util;
 import org.dspace.authorize.AuthorizeException;
 import org.dspace.content.Item;
+import org.dspace.content.service.ItemService;
 import org.dspace.core.Context;
 import org.dspace.submit.AbstractProcessingStep;
 import org.dspace.utils.DSpace;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -27,8 +22,6 @@ import java.sql.SQLException;
  */
 public class REFExceptionStep extends AbstractProcessingStep {
 
-
-
     @Override
     public int doProcessing(Context context, HttpServletRequest request, HttpServletResponse response, SubmissionInfo subInfo) throws ServletException, IOException, SQLException, AuthorizeException {
         String buttonPressed = Util.getSubmitButton(request, NEXT_BUTTON);
@@ -38,27 +31,26 @@ public class REFExceptionStep extends AbstractProcessingStep {
             String selectedOption =  request.getParameter("exception-options");
             if(StringUtils.isNotBlank(selectedOption)){
                 String explanation = request.getParameter(selectedOption+"Explanation");
-                clearExistingExceptions(item);
+                clearExistingExceptions(context, item);
                 if(StringUtils.isNotBlank(explanation)){
-                    item.addMetadata("refterms",selectedOption.equals("exceptionFreeText")?selectedOption:selectedOption+"Explanation",null,null,explanation);
+                	itemService.addMetadata(context, item, "refterms",selectedOption.equals("exceptionFreeText")?selectedOption:selectedOption+"Explanation",null,null,explanation);
                 }
                 String selectedDropdown = request.getParameter(selectedOption+"-dropdown");
                 if(StringUtils.isNotBlank(selectedDropdown)){
-                    item.addMetadata("refterms",selectedOption,null,null,selectedDropdown);
+                	itemService.addMetadata(context, item, "refterms",selectedOption,null,null,selectedDropdown);
                 }
-                item.update();
-                context.commit();
+                itemService.update(context, item);
                 }
             }
 
         return STATUS_COMPLETE;
     }
 
-    private void clearExistingExceptions(Item item) {
+    private void clearExistingExceptions(Context context, Item item) throws SQLException {
         String[] specifiedExceptions =  new DSpace().getServiceManager().getServiceByName("configuredExceptions", String[].class);
         for(int i = 0; i<specifiedExceptions.length; i++){
-            item.clearMetadata("refterms",specifiedExceptions[i], Item.ANY,Item.ANY);
-            item.clearMetadata("refterms",specifiedExceptions[i]+"Explanation",Item.ANY,Item.ANY);
+        	itemService.clearMetadata(context, item, "refterms",specifiedExceptions[i], Item.ANY,Item.ANY);
+        	itemService.clearMetadata(context, item, "refterms",specifiedExceptions[i]+"Explanation",Item.ANY,Item.ANY);
         }
     }
 

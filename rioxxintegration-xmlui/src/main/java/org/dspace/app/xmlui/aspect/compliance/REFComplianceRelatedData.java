@@ -1,23 +1,26 @@
-/**
- * The contents of this file are subject to the license and copyright
- * detailed in the LICENSE and NOTICE files at the root of the source
- * tree and available online at
- *
- * http://www.dspace.org/license/
- */
 package org.dspace.app.xmlui.aspect.compliance;
 
-import com.atmire.utils.*;
-import java.util.*;
-import org.apache.commons.collections.*;
-import org.apache.commons.lang.*;
-import org.apache.commons.lang3.time.*;
-import static org.dspace.app.xmlui.wing.AbstractWingTransformer.*;
-import org.dspace.app.xmlui.wing.*;
-import org.dspace.app.xmlui.wing.element.*;
-import org.dspace.content.Metadatum;
-import org.dspace.core.*;
-import org.dspace.ref.compliance.result.*;
+import static org.dspace.app.xmlui.wing.AbstractWingTransformer.message;
+
+import java.util.Date;
+
+import org.apache.commons.collections.MapUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.time.DateFormatUtils;
+import org.dspace.app.xmlui.wing.Message;
+import org.dspace.app.xmlui.wing.WingException;
+import org.dspace.app.xmlui.wing.element.Cell;
+import org.dspace.app.xmlui.wing.element.Division;
+import org.dspace.app.xmlui.wing.element.Para;
+import org.dspace.app.xmlui.wing.element.Row;
+import org.dspace.app.xmlui.wing.element.Table;
+import org.dspace.content.factory.ContentServiceFactory;
+import org.dspace.content.service.ItemService;
+import org.dspace.core.ConfigurationManager;
+import org.dspace.core.Context;
+import org.dspace.ref.compliance.result.ComplianceResult;
+
+import com.atmire.utils.EmbargoUtils;
 
 /**
  * @author philip at atmire.com
@@ -41,6 +44,8 @@ public class REFComplianceRelatedData implements ComplianceRelatedData {
 
     private final String fullIso = "yyyy-MM-dd'T'HH:mm:ss'Z'";
 
+    protected ItemService itemService;
+    
     @Override
     public void renderRelatedData(Context context, org.dspace.content.Item item, ComplianceResult result, Division div) throws WingException {
             Division relatedDataDiv = div.addDivision("related-data-section", "related-data-section");
@@ -65,10 +70,10 @@ public class REFComplianceRelatedData implements ComplianceRelatedData {
             row.addCellContent(message(T_related_field_base.getKey() + field));
             Cell cell = row.addCell();
 
-            Metadatum[] metadata = item.getMetadataByMetadataString(field);
+            String metadata = itemService.getMetadata(item, field);
 
-            if(metadata.length>0 && StringUtils.isNotBlank(metadata[0].value)){
-                cell.addContent(metadata[0].value);
+            if(StringUtils.isNotBlank(metadata)){
+                cell.addContent(metadata);
             } else if(result.getEstimatedValues().get(field) != null && StringUtils.isNotBlank(result.getEstimatedValues().get(field))) {
                 cell.addContent(result.getEstimatedValues().get(field) + " ");
                 cell.addContent(T_estimated_hint);
@@ -94,4 +99,15 @@ public class REFComplianceRelatedData implements ComplianceRelatedData {
             estimatedHelpPara.addContent(T_estimated_help_info);
         }
     }
+
+	public ItemService getItemService() {
+		if(itemService == null) {
+			itemService = ContentServiceFactory.getInstance().getItemService();
+		}
+		return itemService;
+	}
+
+	public void setItemService(ItemService itemService) {
+		this.itemService = itemService;
+	}
 }

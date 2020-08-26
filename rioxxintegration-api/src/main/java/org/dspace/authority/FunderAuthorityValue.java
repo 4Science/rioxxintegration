@@ -1,11 +1,11 @@
-/**
- * The contents of this file are subject to the license and copyright
- * detailed in the LICENSE and NOTICE files at the root of the source
- * tree and available online at
- *
- * http://www.dspace.org/license/
- */
 package org.dspace.authority;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -13,8 +13,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrInputDocument;
-
-import java.util.*;
+import org.dspace.authority.service.AuthorityValueService;
 
 /**
  * Created by: Antoine Snyers (antoine at atmire dot com)
@@ -137,7 +136,7 @@ public class FunderAuthorityValue extends AuthorityValue {
     }
 
     public String generateString() {
-        return AuthorityValueGenerator.GENERATE + getAuthorityType() + AuthorityValueGenerator.SPLIT + getValue();
+        return AuthorityValueService.GENERATE + getAuthorityType() + AuthorityValueService.SPLIT + getValue();
         // the part after "AuthorityValueGenerator.GENERATE + getAuthorityType() + AuthorityValueGenerator.SPLIT" is the value of the "info" parameter in public AuthorityValue newInstance(String info)
     }
 

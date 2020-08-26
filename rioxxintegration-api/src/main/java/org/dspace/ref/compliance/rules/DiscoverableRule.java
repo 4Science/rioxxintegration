@@ -1,11 +1,6 @@
-/**
- * The contents of this file are subject to the license and copyright
- * detailed in the LICENSE and NOTICE files at the root of the source
- * tree and available online at
- *
- * http://www.dspace.org/license/
- */
 package org.dspace.ref.compliance.rules;
+
+import java.sql.SQLException;
 
 import org.dspace.content.Item;
 import org.dspace.core.Context;
@@ -13,9 +8,6 @@ import org.dspace.discovery.DiscoverQuery;
 import org.dspace.discovery.DiscoverResult;
 import org.dspace.discovery.SearchService;
 import org.dspace.discovery.SearchServiceException;
-import org.dspace.util.ItemUtils;
-
-import java.sql.SQLException;
 
 /**
  * Validation rule that checks if an item is discoverable by an anonymous user through the DSpace search functionality.
@@ -67,7 +59,7 @@ public class DiscoverableRule extends AbstractComplianceRule {
     private void addViolationDescription(final Item item) {
         String description = "item with %s %s is not discoverable using the search functionality";
         if(item.getHandle() == null) {
-            addViolationDescription(description, "title", "\"" + ItemUtils.getMetadataFirstValue(item, "dc", "title", null, Item.ANY) + "\"");
+            addViolationDescription(description, "title", "\"" + getItemService().getMetadataFirstValue(item, "dc", "title", null, Item.ANY) + "\"");
         } else {
             addViolationDescription(description, "handle", item.getHandle());
         }

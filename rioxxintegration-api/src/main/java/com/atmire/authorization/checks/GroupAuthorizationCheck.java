@@ -1,10 +1,3 @@
-/**
- * The contents of this file are subject to the license and copyright
- * detailed in the LICENSE and NOTICE files at the root of the source
- * tree and available online at
- *
- * http://www.dspace.org/license/
- */
 package com.atmire.authorization.checks;
 
 import org.apache.log4j.Logger;
@@ -13,6 +6,8 @@ import org.dspace.content.DSpaceObject;
 import org.dspace.core.Context;
 import org.dspace.eperson.EPerson;
 import org.dspace.eperson.Group;
+import org.dspace.eperson.service.GroupService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Required;
 
 import javax.annotation.PostConstruct;
@@ -28,35 +23,10 @@ public class GroupAuthorizationCheck implements AuthorizationCheck{
     private static final Logger log =  Logger.getLogger(GroupAuthorizationCheck.class);
 
     private List<String> allowedGroups;
-
-    @PostConstruct
-    public void initGroups(){
-        Context context = null;
-        try {
-            context = new Context();
-            Group adminGroup = Group.findByName(context,"Administrator");
-            context.turnOffAuthorisationSystem();
-            for(String group : allowedGroups){
-                Group g = Group.findByName(context,group);
-                if(g == null){
-                    Group createdGroup = Group.create(context);
-                    createdGroup.setName(group);
-                    createdGroup.addMember(adminGroup);
-                    createdGroup.update();
-                }
-            }
-            context.restoreAuthSystemState();
-            context.commit();
-        } catch (SQLException e) {
-           log.error("Error while checking for non-existing groups during the authorization check.",e);
-        } catch (AuthorizeException e) {
-            log.error(e);
-        } finally {
-            if(context!=null){
-                context.abort();
-            }
-        }
-    }
+    
+    @Autowired
+    private GroupService groupService;
+    
     @Required
     public void setAllowedGroups(List<String> allowedGroups){
         this.allowedGroups=allowedGroups;
@@ -71,16 +41,26 @@ public class GroupAuthorizationCheck implements AuthorizationCheck{
 
         for(String group:allowedGroups){
             try {
-                Group g = Group.findByName(context,group);
+                Group g = groupService.findByName(context,group);
 
-               if(g!=null && Group.allMemberIDs(context,g).contains(ePerson.getID())){
+               if(g!=null && groupService.allMembers(context, g).contains(ePerson)){
                    return true;
                 }
-            } catch (SQLException e) {
+            } catch (Exception e) {
                 log.error(e);
             }
 
         }
         return false;
     }
+	public GroupService getGroupService() {
+		return groupService;
+	}
+	public void setGroupService(GroupService groupService) {
+		this.groupService = groupService;
+	}
+
+	public List<String> getAllowedGroups() {
+		return allowedGroups;
+	}
 }

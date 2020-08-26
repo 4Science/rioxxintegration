@@ -7,22 +7,49 @@
  */
 package org.dspace.app.xmlui.objectmanager;
 
-import java.io.*;
-import java.sql.*;
-import java.util.*;
-import org.dspace.app.util.*;
-import org.dspace.app.xmlui.wing.*;
-import org.dspace.authorize.*;
-import org.dspace.content.*;
-import org.dspace.content.authority.*;
-import org.dspace.content.crosswalk.*;
-import org.dspace.core.*;
-import org.dspace.utils.*;
-import org.jdom.*;
-import org.jdom.output.*;
-import org.xml.sax.*;
-import org.xml.sax.helpers.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
+import org.dspace.app.util.Util;
+import org.dspace.app.util.factory.UtilServiceFactory;
+import org.dspace.app.util.service.MetadataExposureService;
+import org.dspace.app.xmlui.wing.AttributeMap;
+import org.dspace.app.xmlui.wing.WingException;
+import org.dspace.authorize.AuthorizeException;
+import org.dspace.authorize.factory.AuthorizeServiceFactory;
+import org.dspace.authorize.service.AuthorizeService;
+import org.dspace.content.Bitstream;
+import org.dspace.content.BitstreamFormat;
+import org.dspace.content.Bundle;
+import org.dspace.content.DSpaceObject;
+import org.dspace.content.Item;
+import org.dspace.content.MetadataField;
+import org.dspace.content.MetadataValue;
+import org.dspace.content.authority.Choices;
+import org.dspace.content.crosswalk.CrosswalkException;
+import org.dspace.content.crosswalk.DisseminationCrosswalk;
+import org.dspace.content.factory.ContentServiceFactory;
+import org.dspace.content.service.BitstreamService;
+import org.dspace.content.service.BundleService;
+import org.dspace.content.service.ItemService;
+import org.dspace.core.ConfigurationManager;
+import org.dspace.core.Constants;
+import org.dspace.core.Context;
+import org.dspace.util.subclasses.Metadata;
+import org.dspace.utils.DSpace;
+import org.jdom.Element;
+import org.jdom.JDOMException;
+import org.jdom.output.SAXOutputter;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
+import org.xml.sax.helpers.XMLReaderFactory;
 
 /**
  * This is an adapter which translates a DSpace item into a METS document
@@ -72,8 +99,14 @@ public class ItemAdapter extends AbstractAdapter
     // DSpace DB context
     private Context context;
 
-    private List<MetaDatumEnricher> metaDatumEnrichers = new DSpace().getServiceManager().getServicesByType(MetaDatumEnricher.class);
+    private List<MetaDatumEnricher> metadatumEnrichers = new DSpace().getServiceManager().getServicesByType(MetaDatumEnricher.class);
 
+    protected AuthorizeService authorizeService = AuthorizeServiceFactory.getInstance().getAuthorizeService();
+    protected ItemService itemService = ContentServiceFactory.getInstance().getItemService();
+    protected BundleService bundleService = ContentServiceFactory.getInstance().getBundleService();
+    protected BitstreamService bitstreamService = ContentServiceFactory.getInstance().getBitstreamService();
+    protected MetadataExposureService metadataExposureService = UtilServiceFactory.getInstance().getMetadataExposureService();
+    
     /**
      * Construct a new ItemAdapter
      *
@@ -249,35 +282,56 @@ public class ItemAdapter extends AbstractAdapter
             }
             startElement(DIM,"dim",attributes);
 
-            Metadatum[] dcvs = item.getMetadata(Item.ANY, Item.ANY, Item.ANY, Item.ANY);
-            dcvs = enrichMetaData(dcvs, context);
+            List<MetadataValue> dcvs = itemService.getMetadata(item, Item.ANY, Item.ANY, Item.ANY, Item.ANY);
+            List<Metadata> mdcvs = enrichMetaData(dcvs, context);
 
-            for (Metadatum dcv : dcvs)
+            for (MetadataValue dcv : dcvs)
             {
-                if (!MetadataExposure.isHidden(context, dcv.schema, dcv.element, dcv.qualifier))
-                {
+                MetadataField metadataField = dcv.getMetadataField();
+                if (!metadataExposureService.isHidden(context, dcv.getMetadataField().getMetadataSchema().getName(), metadataField.getElement(), metadataField.getQualifier())) {
                     // ///////////////////////////////
                     // Field element for each metadata field.
                     attributes = new AttributeMap();
-                    attributes.put("mdschema",dcv.schema);
+                    attributes.put("mdschema", metadataField.getMetadataSchema().getName());
+                    attributes.put("element", metadataField.getElement());
+                    if (metadataField.getQualifier() != null) {
+                        attributes.put("qualifier", metadataField.getQualifier());
+                    }
+                    if (dcv.getLanguage() != null) {
+                        attributes.put("language", dcv.getLanguage());
+                    }
+                    if (dcv.getAuthority() != null || dcv.getConfidence() != Choices.CF_UNSET) {
+                        attributes.put("authority", dcv.getAuthority());
+                        attributes.put("confidence", Choices.getConfidenceText(dcv.getConfidence()));
+                    }
+                    startElement(DIM, "field", attributes);
+                    sendCharacters(dcv.getValue());
+                    endElement(DIM,"field");
+            }
+            }
+            
+            for (Metadata dcv : mdcvs)
+            {
+                if (!metadataExposureService.isHidden(context, dcv.schema, dcv.element, dcv.qualifier)) {
+                    // ///////////////////////////////
+                    // Field element for each metadata field.
+                    attributes = new AttributeMap();
+                    attributes.put("mdschema", dcv.schema);
                     attributes.put("element", dcv.element);
-                    if (dcv.qualifier != null)
-                    {
+                    if (dcv.qualifier != null) {
                         attributes.put("qualifier", dcv.qualifier);
                     }
-                    if (dcv.language != null)
-                    {
-                        attributes.put("language", dcv.language);
+                    if (dcv.getLanguage() != null) {
+                        attributes.put("language", dcv.getLanguage());
                     }
-                    if (dcv.authority != null || dcv.confidence != Choices.CF_UNSET)
-                    {
-                        attributes.put("authority", dcv.authority);
-                        attributes.put("confidence", Choices.getConfidenceText(dcv.confidence));
+                    if (dcv.getAuthority() != null || dcv.getConfidence() != Choices.CF_UNSET) {
+                        attributes.put("authority", dcv.getAuthority());
+                        attributes.put("confidence", Choices.getConfidenceText(dcv.getConfidence()));
                     }
-                    startElement(DIM,"field",attributes);
-                    sendCharacters(dcv.value);
+                    startElement(DIM, "field", attributes);
+                    sendCharacters(dcv.getValue());
                     endElement(DIM,"field");
-                }
+            }
             }
 
             // ///////////////////////////////
@@ -385,15 +439,15 @@ public class ItemAdapter extends AbstractAdapter
             // Generate a second group id for any extra metadata added.
             String groupID2 = getGenericID("group_dmd_");
 
-            Bundle[] bundles = item.getBundles("METADATA");
+            List<Bundle> bundles = itemService.getBundles(item, "METADATA");
             for (Bundle bundle : bundles)
             {
-                Bitstream bitstream = bundle.getBitstreamByName("MODS.xml");
+                    Bitstream bitstream = bundleService.getBitstreamByName(bundle, "MODS.xml");
 
-                if (bitstream == null)
-                {
-                    continue;
-                }
+                    if (bitstream == null)
+                    {
+                        continue;
+                    }
 
 
                 String dmdID = getGenericID("dmd_");
@@ -428,7 +482,7 @@ public class ItemAdapter extends AbstractAdapter
                 reader.setContentHandler(filter);
                 reader.setProperty("http://xml.org/sax/properties/lexical-handler", filter);
                 try {
-                    InputStream is = bitstream.retrieve();
+                	InputStream is = bitstreamService.retrieve(context, bitstream);
                     reader.parse(new InputSource(is));
                 }
                 catch (AuthorizeException ae)
@@ -447,14 +501,14 @@ public class ItemAdapter extends AbstractAdapter
 
     }
 
-    private Metadatum[] enrichMetaData(final Metadatum[] dcvs, final Context context) {
-        List<Metadatum> enrichedList = new ArrayList<>(Arrays.asList(dcvs));
+    private java.util.List<Metadata> enrichMetaData(final java.util.List<MetadataValue> dcvs, final Context context) {
+        List<Metadata> enrichedList = new ArrayList<>();
 
-        for (MetaDatumEnricher metaDatumEnricher : metaDatumEnrichers) {
-            metaDatumEnricher.enrichMetadata(context, enrichedList);
+        for (MetaDatumEnricher metadatumEnricher : metadatumEnrichers) {
+        	enrichedList.addAll(metadatumEnricher.enrichMetadata(context, dcvs));
         }
 
-        return enrichedList.toArray(dcvs);
+        return enrichedList;
     }
 
     /**
@@ -522,7 +576,7 @@ public class ItemAdapter extends AbstractAdapter
                 List<Bundle> bundles = findEnabledBundles();
                 for (Bundle bundle : bundles)
                 {
-                    Bitstream[] bitstreams = bundle.getBitstreams();
+                  List<Bitstream> bitstreams = bundle.getBitstreams();
 
                     // Create a sub-section of <amdSec> for each bitstream in bundle
                     for(Bitstream bitstream : bitstreams)
@@ -651,14 +705,7 @@ public class ItemAdapter extends AbstractAdapter
     }
 
     private Element disseminateElement(DisseminationCrosswalk crosswalk, DSpaceObject dso) throws CrosswalkException, IOException, SQLException, AuthorizeException {
-        Element dissemination;
-        if(crosswalk instanceof ContextAwareDisseminationCrosswalk)
-        {
-            ((ContextAwareDisseminationCrosswalk)crosswalk).setContext(context);
-        }
-        dissemination = crosswalk.disseminateElement(dso);
-
-        return dissemination;
+        return crosswalk.disseminateElement(context, dso);
     }
 
     /**
@@ -752,7 +799,7 @@ public class ItemAdapter extends AbstractAdapter
                 if (isContentBundle)
                 {
                     contentBitstreams.add(bitstream);
-                    if (bundle.getPrimaryBitstreamID() == bitstream.getID())
+                    if (bundle.getPrimaryBitstream() != null && bundle.getPrimaryBitstream().equals(bitstream))
                     {
                         primaryBitstream = bitstream;
                     }
@@ -871,11 +918,11 @@ public class ItemAdapter extends AbstractAdapter
         }
 
 
-        Bundle[] bundles = item.getBundles("METADATA");
+        List<Bundle> bundles = itemService.getBundles(item, "METADATA");
 
         for (Bundle bundle : bundles)
         {
-            Bitstream bitstream = bundle.getBitstreamByName("METS.xml");
+        	Bitstream bitstream = bundleService.getBitstreamByName(bundle, "METS.xml");
 
             if (bitstream == null)
             {
@@ -897,7 +944,7 @@ public class ItemAdapter extends AbstractAdapter
                 XMLReader reader = XMLReaderFactory.createXMLReader();
                 reader.setContentHandler(filter);
                 reader.setProperty("http://xml.org/sax/properties/lexical-handler", filter);
-                reader.parse(new InputSource(bitstream.retrieve()));
+                reader.parse(new InputSource(bitstreamService.retrieve(context, bitstream)));
             }
             catch (AuthorizeException ae)
             {
@@ -921,17 +968,17 @@ public class ItemAdapter extends AbstractAdapter
         List<Bundle> bundles;
         if (fileGrpTypes.size() == 0)
         {
-            bundles = Arrays.asList(item.getBundles());
+        	bundles = item.getBundles();
         }
         else
         {
-            bundles = new ArrayList<Bundle>();
+            bundles = new ArrayList<>();
             for (String fileGrpType : fileGrpTypes)
             {
-                for (Bundle newBundle : item.getBundles(fileGrpType))
-                {
-                    bundles.add(newBundle);
-                }
+                    for (Bundle newBundle : itemService.getBundles(item, fileGrpType))
+                    {
+                            bundles.add(newBundle);
+                    }
             }
         }
 
@@ -961,26 +1008,26 @@ public class ItemAdapter extends AbstractAdapter
         // return org.dspace.content.packager.AbstractMetsDissemination
         // .findOriginalBitstream(item, derived);
 
-        Bundle[] bundles = item.getBundles();
+        List<Bundle> bundles = item.getBundles();
 
         // Filename of original will be filename of the derived bitstream
         // minus the extension (ie everything from and including the last "." character)
         String originalFilename = derived.getName().substring(0, derived.getName().lastIndexOf("."));
 
         // First find "original" bundle
-        for (int i = 0; i < bundles.length; i++)
+        for (Bundle bundle : bundles)
         {
-            if ((bundles[i].getName() != null)
-                    && bundles[i].getName().equals("ORIGINAL"))
+            if ((bundle.getName() != null)
+                    && bundle.getName().equals("ORIGINAL"))
             {
                 // Now find the corresponding bitstream
-                Bitstream[] bitstreams = bundles[i].getBitstreams();
+                List<Bitstream> bitstreams = bundle.getBitstreams();
 
-                for (int bsnum = 0; bsnum < bitstreams.length; bsnum++)
+                for (Bitstream bitstream : bitstreams)
                 {
-                    if (bitstreams[bsnum].getName().equals(originalFilename))
+                    if (bitstream.getName().equals(originalFilename))
                     {
-                        return bitstreams[bsnum];
+                        return bitstream;
                     }
                 }
             }
@@ -1009,13 +1056,13 @@ public class ItemAdapter extends AbstractAdapter
 
     // FIXME: this method is a copy of the one inherited. However the
     // original method is final so we must rename it.
-    protected void renderFileWithAllowed(Item item, Bitstream bitstream, String fileID, String groupID, String admID) throws SAXException
+    protected void renderFileWithAllowed(Item item, Bitstream bitstream, String fileID, String groupID, String admID) throws SAXException, SQLException
     {
         AttributeMap attributes;
 
         // //////////////////////////////
         // Determine the file attributes
-        BitstreamFormat format = bitstream.getFormat();
+        BitstreamFormat format = bitstream.getFormat(context);
         String mimeType = null;
         if (format != null)
         {
@@ -1095,7 +1142,7 @@ public class ItemAdapter extends AbstractAdapter
         // Test if we are allowed to see this item
         String isAllowed = "n";
         try {
-            if (AuthorizeManager.authorizeActionBoolean(context, bitstream, Constants.READ)) {
+        	if (authorizeService.authorizeActionBoolean(context, bitstream, Constants.READ)) {
                 isAllowed = "y";
             }
         } catch (SQLException e) {/* Do nothing */}

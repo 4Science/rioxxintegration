@@ -1,10 +1,3 @@
-/**
- * The contents of this file are subject to the license and copyright
- * detailed in the LICENSE and NOTICE files at the root of the source
- * tree and available online at
- *
- * http://www.dspace.org/license/
- */
 package org.dspace.ref.compliance.rules;
 
 import java.util.*;
@@ -42,9 +35,9 @@ public class AtLeastOneNotBlankRule extends AbstractComplianceRule {
     @Override
     protected boolean doValidationAndBuildDescription(Context context, Item item) {
         for (String field : fieldsToCheck) {
-            Metadatum[] metadata = item.getMetadataByMetadataString(field);
+            List<MetadataValue> metadata = getItemService().getMetadataByMetadataString(item, field);
 
-            if(ArrayUtils.isNotEmpty(metadata) && StringUtils.isNotBlank(metadata[0].value)){
+            if(!metadata.isEmpty() && StringUtils.isNotBlank(metadata.get(0).getValue())){
                 return true;
             }
         }

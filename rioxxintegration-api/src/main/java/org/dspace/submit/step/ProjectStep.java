@@ -1,28 +1,34 @@
-/**
- * The contents of this file are subject to the license and copyright
- * detailed in the LICENSE and NOTICE files at the root of the source
- * tree and available online at
- *
- * http://www.dspace.org/license/
- */
 package org.dspace.submit.step;
 
-import java.io.*;
-import java.sql.*;
-import java.util.*;
-import javax.servlet.*;
-import javax.servlet.http.*;
-import org.apache.commons.lang.*;
-import org.apache.log4j.*;
-import org.dspace.app.util.*;
-import org.dspace.authority.*;
-import org.dspace.authorize.*;
-import org.dspace.content.*;
-import org.dspace.content.authority.*;
-import org.dspace.core.*;
-import org.dspace.project.*;
-import org.dspace.submit.*;
-import org.dspace.utils.*;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.LinkedList;
+import java.util.List;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
+import org.dspace.app.util.SubmissionInfo;
+import org.dspace.app.util.Util;
+import org.dspace.authority.DefaultAuthorityCreator;
+import org.dspace.authority.FunderAuthorityValue;
+import org.dspace.authority.ProjectAuthorityValue;
+import org.dspace.authorize.AuthorizeException;
+import org.dspace.content.Item;
+import org.dspace.content.MetadataField;
+import org.dspace.content.MetadataValue;
+import org.dspace.content.authority.Choices;
+import org.dspace.content.authority.factory.ContentAuthorityServiceFactory;
+import org.dspace.content.authority.service.ChoiceAuthorityService;
+import org.dspace.content.authority.service.MetadataAuthorityService;
+import org.dspace.core.ConfigurationManager;
+import org.dspace.core.Context;
+import org.dspace.project.ProjectService;
+import org.dspace.submit.AbstractProcessingStep;
+import org.dspace.utils.DSpace;
 
 /**
  * Created by Philip Vissenaekens (philip at atmire dot com)
@@ -38,13 +44,23 @@ public class ProjectStep extends AbstractProcessingStep {
     public static final int REMOVE_PROJECT_SUCCESS = 4;
     public static final int No_PROJECTS_ADDED = 5;
 
-    private ProjectService projectService = new DSpace().getServiceManager().getServiceByName("ProjectService", ProjectService.class);
-    private DefaultAuthorityCreator defaultAuthorityCreator = new DSpace().getServiceManager().getServiceByName("defaultAuthorityCreator", DefaultAuthorityCreator.class);
+    private ProjectService projectService;
+    private DefaultAuthorityCreator defaultAuthorityCreator;
 
+    protected final ChoiceAuthorityService choiceAuthorityService;
+    protected final MetadataAuthorityService metadataAuthorityService;
+    
+    /** Constructor */
+    public ProjectStep() throws ServletException
+    {
+        metadataAuthorityService = ContentAuthorityServiceFactory.getInstance().getMetadataAuthorityService();
+        choiceAuthorityService = ContentAuthorityServiceFactory.getInstance().getChoiceAuthorityService();
+    }
+
+    
     @Override
     public int doProcessing(Context context, HttpServletRequest request, HttpServletResponse response, SubmissionInfo subInfo) throws ServletException, IOException, SQLException, AuthorizeException {
         Item item = subInfo.getSubmissionItem().getItem();
-
         clearErrorFields(request);
 
         String buttonPressed = Util.getSubmitButton(request, "");
@@ -55,21 +71,21 @@ public class ProjectStep extends AbstractProcessingStep {
         addFundersWithoutAuthority(context, request, item);
 
         if (buttonPressed.startsWith(removeButton)) {
-            Metadatum[] dcValues = item.getMetadata("rioxxterms", "identifier", "project", Item.ANY);
+            List<MetadataValue> dcValues = itemService.getMetadata(item, "rioxxterms", "identifier", "project", Item.ANY);
 
             int index = Integer.parseInt(buttonPressed.substring(buttonPressed.lastIndexOf("_") + 1, buttonPressed.length()));
 
-            item.clearMetadata("rioxxterms", "identifier", "project", Item.ANY);
-            item.clearMetadata("rioxxterms", "funder", null, Item.ANY);
+            itemService.clearMetadata(context, item, "rioxxterms", "identifier", "project", Item.ANY);
+            itemService.clearMetadata(context, item, "rioxxterms", "funder", null, Item.ANY);
 
             int counter = 0;
-            for (Metadatum dcv : dcValues) {
+            for (MetadataValue dcv : dcValues) {
                 if (counter != index) {
                     try {
-                        ProjectAuthorityValue project = projectService.getProjectByAuthorityId(context, dcv.authority);
-                        item.addMetadata(dcv.schema, dcv.element, dcv.qualifier, dcv.language, dcv.value, dcv.authority, dcv.confidence);
-                        item.addMetadata("rioxxterms", "funder", null, getDefaultLanguageQualifier(), project.getFunderAuthorityValue().getValue(),
-                                project.getFunderAuthorityValue().getId(), (Choices.CF_ACCEPTED));
+                        ProjectAuthorityValue project = getProjectService().getProjectByAuthorityId(context, dcv.getAuthority());
+                        itemService.addMetadata(context, item, dcv.getMetadataField(), dcv.getLanguage(), dcv.getValue(), dcv.getAuthority(), dcv.getConfidence());
+                        itemService.addMetadata(context, item, "rioxxterms", "funder", null, getDefaultLanguageQualifier(), project.getFunderAuthorityValue().getValue(),
+                        project.getFunderAuthorityValue().getId(), (Choices.CF_ACCEPTED));
                     } catch (IllegalArgumentException e) {
                         log.error(e.getMessage(), e);
                     }
@@ -77,8 +93,7 @@ public class ProjectStep extends AbstractProcessingStep {
                 counter++;
             }
 
-            item.update();
-            context.commit();
+            itemService.update(context, item);
 
             return REMOVE_PROJECT_SUCCESS;
         }
@@ -92,11 +107,12 @@ public class ProjectStep extends AbstractProcessingStep {
 
             if (success == STATUS_COMPLETE) {
                 //check that at least one project is added
-                Metadatum[] dcValues = item.getMetadata("rioxxterms", "identifier", "project", Item.ANY);
+                List<MetadataValue> dcValues = itemService.getMetadata(item, "rioxxterms", "identifier", "project", Item.ANY);
 
-                if (dcValues.length == 0) {
+                if (dcValues.size() == 0) {
                     if(ConfigurationManager.getBooleanProperty("rioxx", "submission.funder.required")){
-                        addErrorField(request, MetadataField.formKey("rioxxterms", "identifier", "project"));
+                    	String metadataField = metadataFieldService.findByElement(context, "rioxxterms", "identifier", "project").toString();
+                        addErrorField(request, metadataField);
                         success = No_PROJECTS_ADDED;
                     }
                 }
@@ -108,23 +124,18 @@ public class ProjectStep extends AbstractProcessingStep {
     }
 
     private void addFundersWithoutAuthority(final Context context, final HttpServletRequest request, final Item item) throws SQLException, AuthorizeException {
-        item.clearMetadata("dc", "description", "sponsorship",  Item.ANY);
-
-        readText(request, item, "dc", "description", "sponsorship", true, getDefaultLanguageQualifier());
-
-        item.update();
-        context.commit();
+        itemService.clearMetadata(context, item, "dc", "description", "sponsorship",  Item.ANY);
+        readText(context, request, item, "dc", "description", "sponsorship", true, getDefaultLanguageQualifier());
     }
 
     private int processProjectField(Context context, HttpServletRequest request, Item item, String schema,
                                     String element, String qualifier, int success) throws SQLException, AuthorizeException {
-        String metadataField = MetadataField.formKey(schema, element, qualifier);
-
+        String metadataField = metadataFieldService.findByElement(context, schema, element, qualifier).toString();
         String value = request.getParameter(metadataField);
         String av = request.getParameter(metadataField + "_authority");
         String cv = request.getParameter(metadataField + "_confidence");
         if (StringUtils.isBlank(value) && noProjectAndFunderAttached(item)) {
-            ProjectAuthorityValue project = defaultAuthorityCreator.retrieveDefaultProject(context);
+            ProjectAuthorityValue project = getDefaultAuthorityCreator().retrieveDefaultProject(context);
 
             if(project!=null) {
                 value = project.getValue();
@@ -134,35 +145,34 @@ public class ProjectStep extends AbstractProcessingStep {
         if (StringUtils.isNotBlank(value)) {
             if (StringUtils.isNotBlank(av)) {
                 try {
-                    ProjectAuthorityValue project = projectService.getProjectByAuthorityId(context, av);
-                    item.addMetadata(schema, element, qualifier, getDefaultLanguageQualifier(), value,
+                    ProjectAuthorityValue project = getProjectService().getProjectByAuthorityId(context, av);
+                    itemService.addMetadata(context, item, schema, element, qualifier, getDefaultLanguageQualifier(), value,
                             av, (cv != null && cv.length() > 0) ?
                                     Choices.getConfidenceValue(cv) : Choices.CF_ACCEPTED);
-                    item.addMetadata("rioxxterms", "funder", null, getDefaultLanguageQualifier(), project.getFunderAuthorityValue().getValue(),
+                    itemService.addMetadata(context, item, "rioxxterms", "funder", null, getDefaultLanguageQualifier(), project.getFunderAuthorityValue().getValue(),
                             project.getFunderAuthorityValue().getId(), (Choices.CF_ACCEPTED));
-                    item.update();
-                    context.commit();
+                    itemService.update(context, item);
                 } catch (IllegalArgumentException e) {
                     log.error(e.getMessage(), e);
                     addErrorField(request, metadataField);
                     return LOOKUP_PROJECT_ERROR;
                 }
             } else {
-                String funderAuthority = request.getParameter(MetadataField.formKey("rioxxterms", "funder", null) + "_authority");
+                String metadataFieldFunder = metadataFieldService.findByElement(context, "rioxxterms", "funder", null).toString();
+                String funderAuthority = request.getParameter(metadataFieldFunder + "_authority");
                 try {
                     if (StringUtils.isBlank(funderAuthority)) {
-                        FunderAuthorityValue defaultAuthority = defaultAuthorityCreator.retrieveDefaultFunder(context);
+                        FunderAuthorityValue defaultAuthority = getDefaultAuthorityCreator().retrieveDefaultFunder(context);
 
                         if(defaultAuthority!=null) {
                             funderAuthority = defaultAuthority.getId();
                         }
                     }
-                    ProjectAuthorityValue project = projectService.createProject(context, value, funderAuthority);
-                    item.addMetadata("rioxxterms", "identifier", "project", getDefaultLanguageQualifier(), value, project.getId(), Choices.CF_ACCEPTED);
-                    item.addMetadata("rioxxterms", "funder", null, getDefaultLanguageQualifier(), project.getFunderAuthorityValue().getValue(),
+                    ProjectAuthorityValue project = getProjectService().createProject(context, value, funderAuthority);
+                    itemService.addMetadata(context, item, "rioxxterms", "identifier", "project", getDefaultLanguageQualifier(), value, project.getId(), Choices.CF_ACCEPTED);
+                    itemService.addMetadata(context, item, "rioxxterms", "funder", null, getDefaultLanguageQualifier(), project.getFunderAuthorityValue().getValue(),
                             project.getFunderAuthorityValue().getId(), (Choices.CF_ACCEPTED));
-                    item.update();
-                    context.commit();
+                    itemService.update(context, item);
                     request.getSession().setAttribute("newProject", project);
                 } catch (IllegalArgumentException e) {
                     log.error(e.getMessage(), e);
@@ -178,9 +188,9 @@ public class ProjectStep extends AbstractProcessingStep {
     }
 
     private boolean noProjectAndFunderAttached(Item item) {
-        Metadatum[] funders = item.getMetadata("rioxxterms", "funder", null, Item.ANY);
-        Metadatum[] projects = item.getMetadata("rioxxterms", "identifier", "project", Item.ANY);
-        return funders.length == 0 && projects.length == 0;
+    	List<MetadataValue> funders = itemService.getMetadata(item, "rioxxterms", "funder", null, Item.ANY);
+        List<MetadataValue> projects = itemService.getMetadata(item, "rioxxterms", "identifier", "project", Item.ANY);
+        return funders.size() == 0 && projects.size() == 0;
     }
 
 
@@ -198,15 +208,14 @@ public class ProjectStep extends AbstractProcessingStep {
         return language;
     }
 
-    protected void readText(HttpServletRequest request, Item item, String schema,
-                            String element, String qualifier, boolean repeated, String lang) {
+    protected void readText(Context context, HttpServletRequest request, Item item, String schema,
+                            String element, String qualifier, boolean repeated, String lang) throws SQLException {
         // some other way
-        String metadataField = MetadataField
-                .formKey(schema, element, qualifier);
+        String metadataField = metadataFieldService.findByElement(context, schema, element, qualifier).toString();
 
-        String fieldKey = MetadataAuthorityManager.makeFieldKey(schema, element, qualifier);
-        boolean isAuthorityControlled = MetadataAuthorityManager.getManager().isAuthorityControlled(fieldKey);
-
+        String fieldKey = metadataAuthorityService.makeFieldKey(schema, element, qualifier);
+        boolean isAuthorityControlled = metadataAuthorityService.isAuthorityControlled(fieldKey);
+        
         // Values to add
         List<String> vals = null;
         List<String> auths = null;
@@ -244,17 +253,17 @@ public class ProjectStep extends AbstractProcessingStep {
                 if (isAuthorityControlled) {
                     String authKey = auths.size() > i ? auths.get(i) : null;
                     String sconf = (authKey != null && confs.size() > i) ? confs.get(i) : null;
-                    if (MetadataAuthorityManager.getManager().isAuthorityRequired(fieldKey) &&
+                    if (metadataAuthorityService.isAuthorityRequired(fieldKey) &&
                             (authKey == null || authKey.length() == 0)) {
                         log.warn("Skipping value of " + metadataField + " because the required Authority key is missing or empty.");
                         addErrorField(request, metadataField);
                     } else {
-                        item.addMetadata(schema, element, qualifier, lang, s,
+                        itemService.addMetadata(context, item, schema, element, qualifier, lang, s,
                                 authKey, (sconf != null && sconf.length() > 0) ?
                                         Choices.getConfidenceValue(sconf) : Choices.CF_ACCEPTED);
                     }
                 } else {
-                    item.addMetadata(schema, element, qualifier, lang, s);
+                	itemService.addMetadata(context, item, schema, element, qualifier, lang, s);
                 }
             }
         }
@@ -316,4 +325,25 @@ public class ProjectStep extends AbstractProcessingStep {
         return vals;
     }
 
+	public DefaultAuthorityCreator getDefaultAuthorityCreator() {
+	    if(defaultAuthorityCreator == null) {
+	    	defaultAuthorityCreator = new DSpace().getServiceManager().getServiceByName("defaultAuthorityCreator", DefaultAuthorityCreator.class);
+	    }
+		return defaultAuthorityCreator;
+	}
+
+	public void setDefaultAuthorityCreator(DefaultAuthorityCreator defaultAuthorityCreator) {
+		this.defaultAuthorityCreator = defaultAuthorityCreator;
+	}
+
+	public ProjectService getProjectService() {
+		if(projectService == null) {
+			projectService = new DSpace().getServiceManager().getServiceByName("ProjectService", ProjectService.class);
+		}
+		return projectService;
+	}
+
+	public void setProjectService(ProjectService projectService) {
+		this.projectService = projectService;
+	}
 }

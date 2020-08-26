@@ -1,30 +1,18 @@
-/**
- * The contents of this file are subject to the license and copyright
- * detailed in the LICENSE and NOTICE files at the root of the source
- * tree and available online at
- *
- * http://www.dspace.org/license/
- */
 package org.dspace.authority;
 
-import org.apache.poi.hssf.record.formula.functions.T;
-import org.dspace.authority.indexer.AuthorityIndexingService;
-import org.dspace.kernel.ServiceManager;
-import org.dspace.scripts.PopulateAuthorityFromXML;
-import org.dspace.util.XMLUtils;
-import org.apache.log4j.Logger;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-
-import javax.xml.xpath.XPathExpressionException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Iterator;
-import java.util.List;
+
+import javax.xml.xpath.XPathExpressionException;
+
+import org.apache.log4j.Logger;
+import org.dspace.scripts.PopulateAuthorityFromXML;
+import org.dspace.util.XMLUtils;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
 
 /**
  * Created by: Antoine Snyers (antoine at atmire dot com)

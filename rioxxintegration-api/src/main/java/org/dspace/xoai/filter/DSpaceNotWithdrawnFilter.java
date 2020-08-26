@@ -7,12 +7,7 @@
  */
 package org.dspace.xoai.filter;
 
-import java.util.ArrayList;
-import java.util.List;
-import org.dspace.core.Context;
-import org.dspace.storage.rdbms.DatabaseManager;
 import org.dspace.xoai.data.DSpaceItem;
-import org.dspace.xoai.filter.results.DatabaseFilterResult;
 import org.dspace.xoai.filter.results.SolrFilterResult;
 
 /**
@@ -27,18 +22,6 @@ import org.dspace.xoai.filter.results.SolrFilterResult;
  * @author Tim Donohue
  */
 public class DSpaceNotWithdrawnFilter extends DSpaceFilter {
-
-    @Override
-    public DatabaseFilterResult buildDatabaseQuery(Context context)
-    {
-        List<Object> params = new ArrayList<Object>();
-
-        String filter = "i.withdrawn=FALSE and i.discoverable=TRUE";
-        if(DatabaseManager.isOracle())
-            filter = "i.withdrawn=0 and i.discoverable=1";
-
-        return new DatabaseFilterResult(filter, params);
-    }
 
     @Override
     public boolean isShown(DSpaceItem item)

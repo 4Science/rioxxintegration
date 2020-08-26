@@ -16,14 +16,21 @@ import com.atmire.swordapp.server.util.SimpleRioxxMetadataHelper;
 import net.cnri.util.*;
 import org.dspace.authorize.*;
 import org.dspace.content.Collection;
+import org.dspace.content.factory.ContentServiceFactory;
+import org.dspace.content.service.WorkspaceItemService;
 import org.dspace.content.*;
 import org.dspace.core.*;
+import org.dspace.core.factory.CoreServiceFactory;
 import org.dspace.sword2.*;
+import org.dspace.util.MetadataFieldString;
+import org.dspace.util.subclasses.Metadata;
 import org.swordapp.server.*;
 
 public class SimpleRioxxDCEntryIngester extends AbstractSimpleRioxx implements SwordEntryIngester {
 
     protected HashMap<String, String> dcMap = null;
+    
+    private WorkspaceItemService workspaceItemService = ContentServiceFactory.getInstance().getWorkspaceItemService();
 
     public SimpleRioxxDCEntryIngester() {
         SimpleRioxxMetadataHelper simpleRioxxMetadataHelper = new SimpleRioxxMetadataHelper();
@@ -58,22 +65,22 @@ public class SimpleRioxxDCEntryIngester extends AbstractSimpleRioxx implements S
 
             // clean out any existing item metadata which is allowed to be replaced
             if (replace) {
-                this.removeMetadata(item);
+                this.removeMetadata(context, item);
             }
 
             // add the metadata to the item
-            this.addMetadataToItem(deposit, item);
+            this.addMetadataToItem(context, deposit, item);
 
             // update the item metadata to inclue the current time as
             // the updated date
-            this.setUpdatedDate(item, verboseDescription);
+            this.setUpdatedDate(context, item, verboseDescription);
 
             // in order to write these changes, we need to bypass the
             // authorisation briefly, because although the user may be
             // able to add stuff to the repository, they may not have
             // WRITE permissions on the archive.
             context.turnOffAuthorisationSystem();
-            item.update();
+            getItemService().update(context, item);
             context.restoreAuthSystemState();
 
             verboseDescription.append("Update successful");
@@ -89,17 +96,17 @@ public class SimpleRioxxDCEntryIngester extends AbstractSimpleRioxx implements S
         }
     }
 
-    private void removeMetadata(Item item)
-        throws DSpaceSwordException {
+    private void removeMetadata(Context context, Item item)
+        throws DSpaceSwordException, SQLException {
         String raw = ConfigurationManager.getProperty("swordv2-server", "metadata.replaceable");
         String[] parts = raw.split(",");
         for (String part : parts) {
-            Metadatum dcv = this.makeDCValue(part.trim(), null);
-            item.clearMetadata(dcv.schema, dcv.element, dcv.qualifier, Item.ANY);
+            Metadata dcv = this.makeDCValue(part.trim(), null);
+            getItemService().clearMetadata(context, item, dcv.schema, dcv.element, dcv.qualifier, Item.ANY);
         }
     }
 
-    private void addUniqueMetadata(Metadatum dcv, Item item) {
+    private void addUniqueMetadata(Context context, Metadata dcv, Item item) throws SQLException {
         String qual = dcv.qualifier;
         if (dcv.qualifier == null) {
             qual = Item.ANY;
@@ -109,22 +116,22 @@ public class SimpleRioxxDCEntryIngester extends AbstractSimpleRioxx implements S
         if (dcv.language == null) {
             lang = Item.ANY;
         }
-        Metadatum[] existing = item.getMetadata(dcv.schema, dcv.element, qual, lang);
-        for (Metadatum dcValue : existing) {
+        List<MetadataValue> existing = getItemService().getMetadata(item, dcv.schema, dcv.element, qual, lang);
+        for (MetadataValue dcValue : existing) {
             // FIXME: probably we want to be slightly more careful about qualifiers and languages
             //
             // if the submitted value is already attached to the item, just skip it
-            if (dcValue.value.equals(dcv.value)) {
+            if (dcValue.getValue().equals(dcv.value)) {
                 return;
             }
         }
 
         // if we get to here, go on and add the metadata
-        item.addMetadata(dcv.schema, dcv.element, dcv.qualifier, dcv.language, dcv.value);
+        getItemService().addMetadata(context, item, dcv.schema, dcv.element, dcv.qualifier, dcv.language, dcv.value);
     }
 
-    private void addMetadataToItem(Deposit deposit, Item item)
-        throws DSpaceSwordException {
+    private void addMetadataToItem(Context context, Deposit deposit, Item item)
+        throws DSpaceSwordException, SQLException {
         // now, go through and get the metadata from the EntryPart and put it in DSpace
         RioxxSwordEntry se = (RioxxSwordEntry) deposit.getSwordEntry();
 
@@ -134,20 +141,20 @@ public class SimpleRioxxDCEntryIngester extends AbstractSimpleRioxx implements S
         if (title != null) {
             String titleField = this.dcMap.get("title");
             if (titleField != null) {
-                Metadatum dcv = this.makeDCValue(titleField, title);
-                this.addUniqueMetadata(dcv, item);
+                Metadata dcv = this.makeDCValue(titleField, title);
+                this.addUniqueMetadata(context, dcv, item);
             }
         }
         if (summary != null) {
             String abstractField = this.dcMap.get("abstract");
             if (abstractField != null) {
-                Metadatum dcv = this.makeDCValue(abstractField, summary);
-                this.addUniqueMetadata(dcv, item);
+            	Metadata dcv = this.makeDCValue(abstractField, summary);
+                this.addUniqueMetadata(context, dcv, item);
             }
         }
 
-        Metadatum workflowSwordSubmission = this.makeDCValue("dc.sword.submission", "true");
-        this.addUniqueMetadata(workflowSwordSubmission, item);
+        Metadata workflowSwordSubmission = this.makeDCValue("dc.sword.submission", "true");
+        this.addUniqueMetadata(context, workflowSwordSubmission, item);
 
 
         Map<String, List<String>> dc = se.getData();
@@ -162,18 +169,18 @@ public class SimpleRioxxDCEntryIngester extends AbstractSimpleRioxx implements S
 
             if(fields.length == 1) {
                 // now add all the metadata terms
-                Metadatum dcv = this.makeDCValue(fields[0], null);
+                Metadata dcv = this.makeDCValue(fields[0], null);
                 for (String value : dc.get(term)) {
                     dcv.value = value;
-                    this.addUniqueMetadata(dcv, item);
+                    this.addUniqueMetadata(context, dcv, item);
                 }
             }
             else {
                 for (String field : fields) {
-                    Metadatum dcv = this.makeDCValue(field, null);
+                    Metadata dcv = this.makeDCValue(field, null);
                     for (String value : dc.get(term)) {
                         dcv.value = value;
-                        this.addUniqueMetadata(dcv, item);
+                        this.addUniqueMetadata(context, dcv, item);
                     }
                 }
             }
@@ -194,27 +201,27 @@ public class SimpleRioxxDCEntryIngester extends AbstractSimpleRioxx implements S
             }
             if (item == null) {
                 // simple zip ingester uses the item template, since there is no native metadata
-                wsi = WorkspaceItem.create(context, collection, true);
+                wsi = workspaceItemService.create(context, collection, true);
                 item = wsi.getItem();
             }
 
             // add the metadata to the item
-            this.addMetadataToItem(deposit, item);
+            this.addMetadataToItem(context, deposit, item);
 
             // update the item metadata to inclue the current time as
             // the updated date
-            this.setUpdatedDate(item, verboseDescription);
+            this.setUpdatedDate(context, item, verboseDescription);
 
             // DSpace ignores the slug value as suggested identifier, but
             // it does store it in the metadata
-            this.setSlug(item, deposit.getSlug(), verboseDescription);
+            this.setSlug(context, item, deposit.getSlug(), verboseDescription);
 
             // in order to write these changes, we need to bypass the
             // authorisation briefly, because although the user may be
             // able to add stuff to the repository, they may not have
             // WRITE permissions on the archive.
             context.turnOffAuthorisationSystem();
-            item.update();
+            getItemService().update(context, item);
             context.restoreAuthSystemState();
 
             verboseDescription.append("Ingest successful");
@@ -228,25 +235,12 @@ public class SimpleRioxxDCEntryIngester extends AbstractSimpleRioxx implements S
             throw new SwordAuthException(e);
         } catch (SQLException e) {
             throw new DSpaceSwordException(e);
-        } catch (IOException e) {
-            throw new DSpaceSwordException(e);
         }
     }
 
-    public Metadatum makeDCValue(String field, String value)
+    public Metadata makeDCValue(String field, String value)
         throws DSpaceSwordException {
-        Metadatum dcv = new Metadatum();
-        String[] bits = field.split("\\.");
-        if (bits.length < 2 || bits.length > 3) {
-            throw new DSpaceSwordException("invalid DC value: " + field);
-        }
-        dcv.schema = bits[0];
-        dcv.element = bits[1];
-        if (bits.length == 3) {
-            dcv.qualifier = bits[2];
-        }
-        dcv.value = value;
-        return dcv;
+    	return MetadataFieldString.encapsulate(field, value);
     }
 
     /**
@@ -256,18 +250,19 @@ public class SimpleRioxxDCEntryIngester extends AbstractSimpleRioxx implements S
      *
      * @param item
      * @throws DSpaceSwordException
+     * @throws SQLException 
      */
-    protected void setUpdatedDate(Item item, VerboseDescription verboseDescription)
-        throws DSpaceSwordException {
+    protected void setUpdatedDate(Context context, Item item, VerboseDescription verboseDescription)
+        throws DSpaceSwordException, SQLException {
         String field = ConfigurationManager.getProperty("swordv2-server", "updated.field");
         if (field == null || "".equals(field)) {
             throw new DSpaceSwordException("No configuration, or configuration is invalid for: sword.updated.field");
         }
 
-        Metadatum dc = this.makeDCValue(field, null);
-        item.clearMetadata(dc.schema, dc.element, dc.qualifier, Item.ANY);
+        Metadata dc = this.makeDCValue(field, null);
+        getItemService().clearMetadata(context, item, dc.schema, dc.element, dc.qualifier, Item.ANY);
         DCDate date = new DCDate(new Date());
-        item.addMetadata(dc.schema, dc.element, dc.qualifier, null, date.toString());
+        getItemService().addMetadata(context, item, dc.schema, dc.element, dc.qualifier, null, date.toString());
 
         verboseDescription.append("Updated date added to response from item metadata where available");
     }
@@ -281,9 +276,10 @@ public class SimpleRioxxDCEntryIngester extends AbstractSimpleRioxx implements S
      * @param item
      * @param slugVal
      * @throws DSpaceSwordException
+     * @throws SQLException 
      */
-    protected void setSlug(Item item, String slugVal, VerboseDescription verboseDescription)
-        throws DSpaceSwordException {
+    protected void setSlug(Context context, Item item, String slugVal, VerboseDescription verboseDescription)
+        throws DSpaceSwordException, SQLException {
         // if there isn't a slug value, don't set it
         if (slugVal == null) {
             return;
@@ -294,9 +290,9 @@ public class SimpleRioxxDCEntryIngester extends AbstractSimpleRioxx implements S
             throw new DSpaceSwordException("No configuration, or configuration is invalid for: sword.slug.field");
         }
 
-        Metadatum dc = this.makeDCValue(field, null);
-        item.clearMetadata(dc.schema, dc.element, dc.qualifier, Item.ANY);
-        item.addMetadata(dc.schema, dc.element, dc.qualifier, null, slugVal);
+        Metadata dc = this.makeDCValue(field, null);
+        getItemService().clearMetadata(context, item, dc.schema, dc.element, dc.qualifier, Item.ANY);
+        getItemService().addMetadata(context, item, dc.schema, dc.element, dc.qualifier, null, slugVal);
 
         verboseDescription.append("Slug value set in response where available");
     }

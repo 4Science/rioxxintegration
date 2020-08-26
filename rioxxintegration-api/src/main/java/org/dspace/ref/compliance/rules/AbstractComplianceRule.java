@@ -1,24 +1,24 @@
-/**
- * The contents of this file are subject to the license and copyright
- * detailed in the LICENSE and NOTICE files at the root of the source
- * tree and available online at
- *
- * http://www.dspace.org/license/
- */
 package org.dspace.ref.compliance.rules;
 
-import java.sql.*;
-import java.util.*;
-import org.apache.commons.collections.*;
-import org.apache.commons.lang3.*;
-import org.apache.commons.lang3.math.*;
-import org.dspace.content.*;
-import org.dspace.core.*;
-import org.dspace.ref.compliance.definition.model.*;
-import org.dspace.ref.compliance.result.*;
-import org.dspace.util.*;
-import org.joda.time.*;
-import org.joda.time.format.*;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
+import org.dspace.content.Item;
+import org.dspace.content.MetadataValue;
+import org.dspace.content.factory.ContentServiceFactory;
+import org.dspace.content.service.ItemService;
+import org.dspace.core.Context;
+import org.dspace.ref.compliance.definition.model.Value;
+import org.dspace.ref.compliance.result.RuleComplianceResult;
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.ISODateTimeFormat;
 
 /**
  * Abstract implementation of a compliance rule
@@ -34,6 +34,8 @@ public abstract class AbstractComplianceRule implements ComplianceRule {
     private String definitionHint = null;
 
     private String resolutionHint = null;
+    
+    private ItemService itemService = ContentServiceFactory.getInstance().getItemService();
 
     public void setDefinitionHint(final String definitionHint) {
         this.definitionHint = definitionHint;
@@ -151,13 +153,17 @@ public abstract class AbstractComplianceRule implements ComplianceRule {
         }
     }
 
-    protected List<Metadatum> getMetadata(final Context context, final Item item, final String metadataField) {
-        List<Metadatum> output;
+    protected List<String> getMetadata(final Context context, final Item item, final String metadataField) {
+        List<String> output;
 
         try {
             CustomField customField = CustomField.findByField(metadataField);
             if (customField == null) {
-                output = ItemUtils.getMetadata(item, metadataField);
+                List<MetadataValue> list = itemService.getMetadataByMetadataString(item, metadataField);
+                output = new ArrayList<>();
+                for(MetadataValue ll : list) {
+                	output.add(ll.getValue());
+                }
             } else {
                 output = customField.createValueList(context, item);
             }
@@ -171,9 +177,9 @@ public abstract class AbstractComplianceRule implements ComplianceRule {
     protected DateTime getFirstDateValue(final Context context, final Item item, final String metadataField) {
 
         try {
-            List<Metadatum> fieldValueList = getMetadata(context, item, metadataField);
+            List<String> fieldValueList = getMetadata(context, item, metadataField);
             if (CollectionUtils.isNotEmpty(fieldValueList)) {
-                return parseDateTime(fieldValueList.get(0).value);
+                return parseDateTime(fieldValueList.get(0));
             }
 
         } catch (IllegalArgumentException ex) {
@@ -202,5 +208,13 @@ public abstract class AbstractComplianceRule implements ComplianceRule {
     }
 
     protected abstract boolean doValidationAndBuildDescription(final Context context, final Item item);
+
+	public ItemService getItemService() {
+		return itemService;
+	}
+
+	public void setItemService(ItemService itemService) {
+		this.itemService = itemService;
+	}
 
 }

@@ -22,7 +22,7 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<dspace.version>[5.11-SNAPSHOT,6.0-rc1-SNAPSHOT)</dspace.version>
+		<dspace.version>[6.4-SNAPSHOT,7.0-SNAPSHOT)</dspace.version>
 		<!-- 'root.basedir' is the path to the root [src] dir. It must be redefined 
 			by each child POM, as it is used to reference the LICENSE_HEADER and *.properties 
 			file(s) in that directory. -->
