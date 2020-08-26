@@ -43,6 +43,35 @@ public class GroupAuthorizationInitializer implements FlywayCallback {
 
 	@Override
 	public void afterMigrate(Connection connection) {
+        Context context = null;
+        try {
+            context = new Context();
+            Group adminGroup = groupService.findByName(context,"Administrator");
+            context.turnOffAuthorisationSystem();
+            if(adminGroup==null) {
+            	//try this to initialize default
+            	groupService.initDefaultGroupNames(context);
+            	adminGroup = groupService.findByName(context,"Administrator");
+            }
+            for(String group : getAllowedGroupsForCompliance().getAllowedGroups()){
+                Group g = groupService.findByName(context,group);
+                if(g == null){
+                    Group createdGroup = groupService.create(context);
+                    groupService.setName(createdGroup, group);
+                    groupService.addMember(context, adminGroup, createdGroup);
+                    groupService.update(context, createdGroup);
+                }
+            }
+            context.restoreAuthSystemState();
+        } catch (SQLException e) {
+           log.error("Error while checking for non-existing groups during the authorization check.",e);
+        } catch (AuthorizeException e) {
+            log.error(e);
+        } finally {
+            if(context!=null){
+                context.abort();
+            }
+        }
 	}
 
 	@Override
@@ -83,30 +112,6 @@ public class GroupAuthorizationInitializer implements FlywayCallback {
 
 	@Override
 	public void afterInfo(Connection connection) {
-        Context context = null;
-        try {
-            context = new Context();
-            Group adminGroup = groupService.findByName(context,"Administrator");
-            context.turnOffAuthorisationSystem();
-            for(String group : getAllowedGroupsForCompliance().getAllowedGroups()){
-                Group g = groupService.findByName(context,group);
-                if(g == null){
-                    Group createdGroup = groupService.create(context);
-                    groupService.setName(createdGroup, group);
-                    groupService.addMember(context, adminGroup, createdGroup);
-                    groupService.update(context, createdGroup);
-                }
-            }
-            context.restoreAuthSystemState();
-        } catch (SQLException e) {
-           log.error("Error while checking for non-existing groups during the authorization check.",e);
-        } catch (AuthorizeException e) {
-            log.error(e);
-        } finally {
-            if(context!=null){
-                context.abort();
-            }
-        }
 	}
 
 	public GroupAuthorizationCheck getAllowedGroupsForCompliance() {
