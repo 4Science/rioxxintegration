@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- 
+<!--
 
     The contents of this file are subject to the license and copyright
     detailed in the LICENSE and NOTICE files at the root of the source
@@ -7,8 +7,7 @@
 
     http://www.dspace.org/license/
 
-	Developed by DSpace @ Lyncode <dspace@lyncode.com>
- -->
+-->
 <Configuration indented="true" maxListIdentifiersSize="100" maxListRecordsSize="100"
                maxListSetsSize="100" stylesheet="static/style.xsl"
                xmlns="http://www.lyncode.com/XOAIConfiguration">
