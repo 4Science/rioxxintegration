@@ -4,11 +4,11 @@
 	<parent>
 		<groupId>it.4science.dspace</groupId>
 		<artifactId>rioxxintegration</artifactId>
-		<version>6.4.0-SNAPSHOT</version>
+		<version>6.3.0-SNAPSHOT</version>
 	</parent>
 	<groupId>it.4science.dspace</groupId>
 	<artifactId>rioxxintegration-xmlui</artifactId>
-	<version>6.4.0-SNAPSHOT</version>
+	<version>6.3.0-SNAPSHOT</version>
 	<packaging>war</packaging>
 	<name>4Science Ref and Rioxx XMLUI</name>
 
