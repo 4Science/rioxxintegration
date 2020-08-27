@@ -18,8 +18,14 @@ import org.apache.commons.collections.CollectionUtils;
 import org.dspace.app.xmlui.wing.Message;
 import org.dspace.app.xmlui.wing.WingException;
 import org.dspace.app.xmlui.wing.element.PageMeta;
-import org.dspace.content.*;
+import org.dspace.content.Bitstream;
+import org.dspace.content.Bundle;
+import org.dspace.content.Collection;
+import org.dspace.content.Community;
+import org.dspace.content.DSpaceObject;
+import org.dspace.content.Item;
 import org.dspace.content.factory.ContentServiceFactory;
+import org.dspace.content.service.CollectionService;
 import org.dspace.content.service.CommunityService;
 import org.dspace.core.Constants;
 import org.dspace.core.Context;
@@ -42,6 +48,7 @@ public class HandleUtil
 
     protected static final CommunityService communityService = ContentServiceFactory.getInstance().getCommunityService();
     protected static final HandleService handleService = HandleServiceFactory.getInstance().getHandleService();
+    protected static final CollectionService collectionService = ContentServiceFactory.getInstance().getCollectionService();
 
 
     /**
@@ -218,7 +225,8 @@ public class HandleUtil
 
         if (aDso instanceof Collection)
         {
-            Collection collection = (Collection) aDso;
+            Collection collection = null;
+            collection = collectionService.find(context, aDso.getID());
             stack.push(collection);
             List<Community> communities = collection.getCommunities();
 
@@ -227,7 +235,8 @@ public class HandleUtil
 
         if (aDso instanceof Community)
         {
-            Community community = (Community) aDso;
+            Community community = null;
+            community = communityService.find(context, aDso.getID());
             stack.push(community);
 
             for (Community parent : communityService.getAllParents(context, community))
