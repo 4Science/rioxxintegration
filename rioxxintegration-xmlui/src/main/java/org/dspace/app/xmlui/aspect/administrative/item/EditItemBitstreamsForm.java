@@ -224,8 +224,9 @@ public class EditItemBitstreamsForm extends AbstractDSpaceTransformer {
                     downButton.setHelp(T_order_down);
 
                     //These values will only be used IF javascript is disabled or isn't working
-                    cell.addHidden(bundle.getID() + "_" + bitstream.getID() + "_up_value").setValue(retrieveOrderUpButtonValue((java.util.List<Integer>) bitstreamIdOrder.clone(), bitstreamIndex));
-                    cell.addHidden(bundle.getID() + "_" + bitstream.getID() + "_down_value").setValue(retrieveOrderDownButtonValue((java.util.List<Integer>) bitstreamIdOrder.clone(), bitstreamIndex));
+                    cell.addHidden(bundle.getID() + "_" + bitstream.getID() + "_up_value").setValue(retrieveOrderUpButtonValue((java.util.List<UUID>) bitstreamIdOrder.clone(), bitstreamIndex));
+                    String characters = retrieveOrderDownButtonValue((java.util.List<UUID>) bitstreamIdOrder.clone(), bitstreamIndex);
+                    cell.addHidden(bundle.getID() + "_" + bitstream.getID() + "_down_value").setValue(characters);                    
                 }else{
                     row.addCell().addContent(String.valueOf(bitstreamIndex));
                 }
@@ -273,23 +274,24 @@ public class EditItemBitstreamsForm extends AbstractDSpaceTransformer {
 
     }
 
-    private String retrieveOrderUpButtonValue(java.util.List<Integer> bitstreamIdOrder, int bitstreamIndex) {
+    private String retrieveOrderUpButtonValue(java.util.List<UUID> bitstreamIdOrder, int bitstreamIndex) {
         if(0 != bitstreamIndex){
             //We don't have the first button, so create a value where the current bitstreamId moves one up
-            Integer temp = bitstreamIdOrder.get(bitstreamIndex);
+            UUID temp = bitstreamIdOrder.get(bitstreamIndex);
             bitstreamIdOrder.set(bitstreamIndex, bitstreamIdOrder.get(bitstreamIndex - 1));
             bitstreamIdOrder.set(bitstreamIndex - 1, temp);
         }
-        return StringUtils.join(bitstreamIdOrder.toArray(new Integer[bitstreamIdOrder.size()]), ",");
+        UUID[] uuids = new UUID[bitstreamIdOrder.size()];
+        return StringUtils.join(bitstreamIdOrder.toArray(uuids), ",");
     }
 
-    private String retrieveOrderDownButtonValue(java.util.List<Integer> bitstreamIdOrder, int bitstreamIndex) {
+    private String retrieveOrderDownButtonValue(java.util.List<UUID> bitstreamIdOrder, int bitstreamIndex) {
         if(bitstreamIndex < (bitstreamIdOrder.size()) -1){
             //We don't have the first button, so create a value where the current bitstreamId moves one up
-            Integer temp = bitstreamIdOrder.get(bitstreamIndex);
+            UUID temp = bitstreamIdOrder.get(bitstreamIndex);
             bitstreamIdOrder.set(bitstreamIndex, bitstreamIdOrder.get(bitstreamIndex + 1));
             bitstreamIdOrder.set(bitstreamIndex + 1, temp);
         }
-        return StringUtils.join(bitstreamIdOrder.toArray(new Integer[bitstreamIdOrder.size()]), ",");
+        return StringUtils.join(bitstreamIdOrder.toArray(new UUID[bitstreamIdOrder.size()]), ",");
     }
 }

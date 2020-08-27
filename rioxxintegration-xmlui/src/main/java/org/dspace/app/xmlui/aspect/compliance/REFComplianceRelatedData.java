@@ -77,7 +77,7 @@ public class REFComplianceRelatedData implements ComplianceRelatedData {
             row.addCellContent(message(T_related_field_base.getKey() + field));
             Cell cell = row.addCell();
 
-            String metadata = itemService.getMetadata(item, field);
+            String metadata = getItemService().getMetadata(item, field);
 
             if(StringUtils.isNotBlank(metadata)){
                 cell.addContent(metadata);

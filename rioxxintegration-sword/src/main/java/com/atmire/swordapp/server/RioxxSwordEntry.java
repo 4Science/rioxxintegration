@@ -17,6 +17,8 @@ import org.dspace.content.authority.*;
 import org.dspace.content.authority.factory.ContentAuthorityServiceFactory;
 import org.dspace.content.authority.service.MetadataAuthorityService;
 import org.dspace.core.*;
+import org.dspace.services.ConfigurationService;
+import org.dspace.services.factory.DSpaceServicesFactory;
 import org.swordapp.server.*;
 
 public class RioxxSwordEntry extends SwordEntry {
@@ -25,12 +27,13 @@ public class RioxxSwordEntry extends SwordEntry {
     List<String> acceptedNamespaces = new LinkedList<>();
     
     private MetadataAuthorityService metadataAuthorityService = ContentAuthorityServiceFactory.getInstance().getMetadataAuthorityService();
+    private ConfigurationService configurationService = DSpaceServicesFactory.getInstance().getConfigurationService();
     		
     public RioxxSwordEntry(Entry entry) {
         super(entry);
         SimpleRioxxMetadataHelper simpleRioxxMetadataHelper = new SimpleRioxxMetadataHelper();
         dcMap = simpleRioxxMetadataHelper.getDcMap();
-        String namespaces = ConfigurationManager.getProperty("swordv2-server","swordv2.accepted.namespaces");
+        String namespaces = configurationService.getProperty("swordv2-server.swordv2.accepted.namespaces");
         for (String namespace : namespaces.split(",")) {
             acceptedNamespaces.add(namespace.trim());
         }

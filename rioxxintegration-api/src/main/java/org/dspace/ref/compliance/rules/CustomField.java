@@ -39,11 +39,14 @@ public enum CustomField {
 						bitstream, Constants.READ);
 
 				for (ResourcePolicy pol : policiesByDSOAndType) {
+					
 					// We are only interested in bitstreams that have a READ policy for Anonymous
-					if (pol.getGroup().getName() == Group.ANONYMOUS) {
-						String value = new String();
-						value = bitstream.getName();
-						output.add(value);
+					if(pol.getGroup()!=null) {
+						if (StringUtils.equalsIgnoreCase(pol.getGroup().getName(),Group.ANONYMOUS)) {
+							String value = new String();
+							value = bitstream.getName();
+							output.add(value);
+						}
 					}
 				}
 			}

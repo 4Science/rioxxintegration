@@ -187,7 +187,7 @@ public class DescribeStep extends AbstractSubmissionStep
         form.setHead(T_head);
 
         // Fetch the document type (dc.type)
-        String typeField = org.dspace.core.ConfigurationManager.getProperty("submission", "type.bind.field");
+        String typeField = org.dspace.core.ConfigurationManager.getProperty("submission.type.bind.field");
 
         String documentType = "";
         if( StringUtils.isNotBlank(typeField))

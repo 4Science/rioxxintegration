@@ -151,7 +151,7 @@ public class DescribeStep extends AbstractProcessingStep
         }
 
         // Fetch the document type (dc.type)
-        String typeField = org.dspace.core.ConfigurationManager.getProperty("submission", "type.bind.field");
+        String typeField = org.dspace.core.ConfigurationManager.getProperty("submission.type.bind.field");
 
         String documentType = "";
         if(org.apache.commons.lang3.StringUtils.isNotBlank(typeField) && (itemService.getMetadata(item, typeField) != null) && (itemService.getMetadataByMetadataString(item, typeField).size()>0) )

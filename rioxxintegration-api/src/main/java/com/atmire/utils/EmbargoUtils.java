@@ -11,6 +11,7 @@ import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.dspace.authorize.ResourcePolicy;
 import org.dspace.authorize.factory.AuthorizeServiceFactory;
@@ -64,16 +65,18 @@ public class EmbargoUtils {
                     java.util.List<ResourcePolicy> policiesByDSOAndType = authorizeService.getPoliciesActionFilter(context, bitstream, Constants.READ);
 
                     for(ResourcePolicy pol:policiesByDSOAndType){
-                    if (pol.getGroup().getName() == Group.ANONYMOUS) {
-                        //This will be the start date of the Anonymous policy: Anonymous will get read access on
-                        Date date=pol.getStartDate();
-                        if(date!=null)
-                            if(lastEmbargo==null){
-                                lastEmbargo=date;
-                            } else if(date.after(lastEmbargo)) {
-                                lastEmbargo=date;
-                            }
-                    }
+                    	if(pol.getGroup()!=null) {
+                    		if (StringUtils.equalsIgnoreCase(pol.getGroup().getName(),Group.ANONYMOUS)) {
+		                        //This will be the start date of the Anonymous policy: Anonymous will get read access on
+		                        Date date=pol.getStartDate();
+		                        if(date!=null)
+		                            if(lastEmbargo==null){
+		                                lastEmbargo=date;
+		                            } else if(date.after(lastEmbargo)) {
+		                                lastEmbargo=date;
+		                            }
+		                    }
+                    	}
                 }
             }
 
