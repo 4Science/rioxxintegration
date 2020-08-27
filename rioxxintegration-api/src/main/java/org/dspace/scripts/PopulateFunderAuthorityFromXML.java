@@ -12,6 +12,7 @@ import java.io.File;
 import org.dspace.authority.AuthorityValue;
 import org.dspace.authority.FunderAuthorityValue;
 import org.dspace.authority.FunderXmlFileParser;
+import org.dspace.authority.factory.AuthorityServiceFactory;
 import org.dspace.authority.service.AuthorityValueService;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -21,8 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  */
 public class PopulateFunderAuthorityFromXML extends PopulateAuthorityFromXML<FunderAuthorityValue> {
 
-    @Autowired(required = true)
-    protected AuthorityValueService authorityValueService;
+    protected AuthorityValueService authorityValueService = AuthorityServiceFactory.getInstance().getAuthorityValueService();
     
     public static void main(String[] args) {
         PopulateFunderAuthorityFromXML script = new PopulateFunderAuthorityFromXML();
