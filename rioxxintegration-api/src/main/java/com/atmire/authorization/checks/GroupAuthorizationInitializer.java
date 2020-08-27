@@ -63,6 +63,8 @@ public class GroupAuthorizationInitializer implements FlywayCallback {
                 }
             }
             context.restoreAuthSystemState();
+            // Commit changes and close context
+            context.complete();
         } catch (SQLException e) {
            log.error("Error while checking for non-existing groups during the authorization check.",e);
         } catch (AuthorizeException e) {
