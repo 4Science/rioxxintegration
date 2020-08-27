@@ -23,7 +23,7 @@ goto end
 echo Using DSpace installation in: %cd%
 
 REM Build a CLASSPATH including all classes in oai webapp, all libraries in [dspace]/lib and the config folder.
-set DSPACE_CLASSPATH=%CLASSPATH%;config;webapps\oai\WEB-INF\classes\;webapps\xmlui\WEB-INF\classes\
+set DSPACE_CLASSPATH=%CLASSPATH%;config;webapps\xmlui\WEB-INF\classes\;webapps\oai\WEB-INF\classes\
 for %%f in (lib\*.jar) DO CALL bin\buildpath.bat %%f
 
 REM If the user only wants the CLASSPATH, just give it now.

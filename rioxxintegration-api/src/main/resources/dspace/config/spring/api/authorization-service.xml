@@ -40,4 +40,7 @@
         </property>
     </bean>
 
+	<bean class="com.atmire.authorization.checks.GroupAuthorizationInitializer">
+		<property name="allowedGroupsForCompliance" ref="allowedGroupsForCompliance"/>
+	</bean>
 </beans>
