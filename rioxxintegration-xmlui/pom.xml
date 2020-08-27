@@ -50,19 +50,13 @@
 	</build>
 
 	<dependencies>
-		<dependency>
-			<groupId>org.dspace</groupId>
-			<artifactId>dspace-xmlui</artifactId>
-			<type>jar</type>
-			<classifier>classes</classifier>
-			<scope>provided</scope>
-		</dependency>
 
 		<!-- DSpace XMLUI Webapp -->
 		<dependency>
 			<groupId>org.dspace</groupId>
 			<artifactId>dspace-xmlui</artifactId>
 			<type>war</type>
+			<scope>provided</scope>
 		</dependency>
 
 		<!-- DSpace XMLUI API -->
@@ -71,15 +65,18 @@
 			<artifactId>dspace-xmlui</artifactId>
 			<type>jar</type>
 			<classifier>classes</classifier>
+			<scope>provided</scope>
 		</dependency>
-		<dependency>
-			<groupId>it.4science.dspace</groupId>
-			<artifactId>rioxxintegration-api</artifactId>
-		</dependency>
+
 		<dependency>
 			<groupId>javax.servlet</groupId>
 			<artifactId>jstl</artifactId>
 			<version>1.2</version>
 		</dependency>
+		
+		<dependency>
+			<groupId>it.4science.dspace</groupId>
+			<artifactId>rioxxintegration-api</artifactId>
+		</dependency>		
 	</dependencies>
 </project>
