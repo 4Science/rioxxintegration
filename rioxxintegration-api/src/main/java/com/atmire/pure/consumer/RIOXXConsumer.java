@@ -84,87 +84,90 @@ public class RIOXXConsumer implements Consumer {
     public void end(Context ctx) throws Exception {
         for (UUID itemId : itemIds) {
             Item item = itemService.find(ctx, itemId);
-            log.debug("updating funders of item " + item.getID());
-
-            List<MetadataValue> metadatum = itemService.getMetadata(item, "dc", "sword", "submission", Item.ANY);
-            if (!(metadatum.size() == 0 || StringUtils.equals(metadatum.get(0).getValue(), "false"))) {
-                List<MetadataValue> metadata = itemService.getMetadata(item, "rioxxterms", "newfunderprojectpair", null, Item.ANY);
-                itemService.clearMetadata(ctx, item, "rioxxterms", "newfunderprojectpair", null, Item.ANY);
-
-                for (MetadataValue m : metadata) {
-
-                    String funderName = "";
-                    String funderID = "";
-                    String project = "";
-
-
-                    //funder and project are in same metadatafield separated by ::
-                    String[] split = m.getValue().split("::");
-
-                    if (split.length == 3) {
-                        funderID =  StringUtils.substringAfter(split[0], "dx.doi.org/");
-                        funderName = split[1];
-                        project = split[2];
-                    }
-
-                    if ((StringUtils.isBlank(funderID) && StringUtils.isBlank(funderName)) || StringUtils.isBlank(project)) {
-                        log.warn("No funder or no project found");
-                    } else {
-
-                        List<AuthorityValue> projectAuthorityList = authorityValueService
-                                .findByValue(ctx, "rioxxterms_identifier_project", project);
-
-                        FunderAuthorityValue funderAuthority = findFunder(ctx, funderName, funderID);
-                        ProjectAuthorityValue projectAuthority = null;
-
-                        if (CollectionUtils.isNotEmpty(projectAuthorityList)) {
-                            projectAuthority = (ProjectAuthorityValue) projectAuthorityList.get(0);
-                        }
-
-                        if (funderAuthority != null) {
-
-                            //Create new project if there isn't one just yet
-                            if (projectAuthority != null) {
-                            } else {
-                                projectAuthority = projectService.createProject(ctx, project, funderAuthority.getId());
-
-                            }
-
-                        } else {
-                            log.warn("no exact match for funder " + funderName + " in item " + item.getID());
-                        }
-
-                        //Add the metadata + delete the newfunderprojectpair
-                        if (projectAuthority != null && funderAuthority != null) {
-                            addValue(ctx, item, "rioxxterms", "identifier", "project", null, projectAuthority);
-                            addValue(ctx, item, "rioxxterms", "funder", null, null, funderAuthority);
-                            log.info("project - funder pair (" + projectAuthority.getValue() + " - " + funderAuthority
-                                    .getValue() + ") is added to the item " + item.getID());
-                        } else {
-                            itemService.addMetadata(ctx, item, "rioxxterms", "newfunderprojectpair", null, m.getLanguage(), m.getValue());
-                        }
-                    }
-                }
-                Set<MetadataField> metadataToRefresh = new HashSet<MetadataField>();
-                for (MetadataValue m : itemService.getMetadata(item, Item.ANY, Item.ANY, Item.ANY, Item.ANY)) {
-                    if (metadataAuthorityService.isAuthorityControlled(m.getMetadataField().toString('_'))) {
-                        metadataToRefresh.add(m.getMetadataField());
-                    }
-                }
-                for(MetadataField metadataToRefreshItem : metadataToRefresh) {
-                	String schema = metadataToRefreshItem.getMetadataSchema().getName();
-					String element = metadataToRefreshItem.getElement();
-					String qualifier = metadataToRefreshItem.getQualifier();
-					List<MetadataValue> list = itemService.getMetadata(item, schema, element, qualifier, Item.ANY);
-					itemService.clearMetadata(ctx, item, schema, element, qualifier, Item.ANY);
-                	for (MetadataValue m : list) {
-                		boolean handled = handleAuthorityControlledMetadatum(ctx, item, m);
-                		if(!handled) {
-                			itemService.addMetadata(ctx, item, schema, element, qualifier, m.getLanguage(), m.getValue(), m.getAuthority(), m.getConfidence());
-                		}
-                	}
-                }
-                itemService.update(ctx, item);
+            
+            if(item!=null) {
+	            log.debug("updating funders of item " + item.getID());
+	
+	            List<MetadataValue> metadatum = itemService.getMetadata(item, "dc", "sword", "submission", Item.ANY);
+	            if (!(metadatum.size() == 0 || StringUtils.equals(metadatum.get(0).getValue(), "false"))) {
+	                List<MetadataValue> metadata = itemService.getMetadata(item, "rioxxterms", "newfunderprojectpair", null, Item.ANY);
+	                itemService.clearMetadata(ctx, item, "rioxxterms", "newfunderprojectpair", null, Item.ANY);
+	
+	                for (MetadataValue m : metadata) {
+	
+	                    String funderName = "";
+	                    String funderID = "";
+	                    String project = "";
+	
+	
+	                    //funder and project are in same metadatafield separated by ::
+	                    String[] split = m.getValue().split("::");
+	
+	                    if (split.length == 3) {
+	                        funderID =  StringUtils.substringAfter(split[0], "dx.doi.org/");
+	                        funderName = split[1];
+	                        project = split[2];
+	                    }
+	
+	                    if ((StringUtils.isBlank(funderID) && StringUtils.isBlank(funderName)) || StringUtils.isBlank(project)) {
+	                        log.warn("No funder or no project found");
+	                    } else {
+	
+	                        List<AuthorityValue> projectAuthorityList = authorityValueService
+	                                .findByValue(ctx, "rioxxterms_identifier_project", project);
+	
+	                        FunderAuthorityValue funderAuthority = findFunder(ctx, funderName, funderID);
+	                        ProjectAuthorityValue projectAuthority = null;
+	
+	                        if (CollectionUtils.isNotEmpty(projectAuthorityList)) {
+	                            projectAuthority = (ProjectAuthorityValue) projectAuthorityList.get(0);
+	                        }
+	
+	                        if (funderAuthority != null) {
+	
+	                            //Create new project if there isn't one just yet
+	                            if (projectAuthority != null) {
+	                            } else {
+	                                projectAuthority = projectService.createProject(ctx, project, funderAuthority.getId());
+	
+	                            }
+	
+	                        } else {
+	                            log.warn("no exact match for funder " + funderName + " in item " + item.getID());
+	                        }
+	
+	                        //Add the metadata + delete the newfunderprojectpair
+	                        if (projectAuthority != null && funderAuthority != null) {
+	                            addValue(ctx, item, "rioxxterms", "identifier", "project", null, projectAuthority);
+	                            addValue(ctx, item, "rioxxterms", "funder", null, null, funderAuthority);
+	                            log.info("project - funder pair (" + projectAuthority.getValue() + " - " + funderAuthority
+	                                    .getValue() + ") is added to the item " + item.getID());
+	                        } else {
+	                            itemService.addMetadata(ctx, item, "rioxxterms", "newfunderprojectpair", null, m.getLanguage(), m.getValue());
+	                        }
+	                    }
+	                }
+	                Set<MetadataField> metadataToRefresh = new HashSet<MetadataField>();
+	                for (MetadataValue m : itemService.getMetadata(item, Item.ANY, Item.ANY, Item.ANY, Item.ANY)) {
+	                    if (metadataAuthorityService.isAuthorityControlled(m.getMetadataField().toString('_'))) {
+	                        metadataToRefresh.add(m.getMetadataField());
+	                    }
+	                }
+	                for(MetadataField metadataToRefreshItem : metadataToRefresh) {
+	                	String schema = metadataToRefreshItem.getMetadataSchema().getName();
+						String element = metadataToRefreshItem.getElement();
+						String qualifier = metadataToRefreshItem.getQualifier();
+						List<MetadataValue> list = itemService.getMetadata(item, schema, element, qualifier, Item.ANY);
+						itemService.clearMetadata(ctx, item, schema, element, qualifier, Item.ANY);
+	                	for (MetadataValue m : list) {
+	                		boolean handled = handleAuthorityControlledMetadatum(ctx, item, m);
+	                		if(!handled) {
+	                			itemService.addMetadata(ctx, item, schema, element, qualifier, m.getLanguage(), m.getValue(), m.getAuthority(), m.getConfidence());
+	                		}
+	                	}
+	                }
+	                itemService.update(ctx, item);
+	            }
             }
         }
         itemIds.clear();
