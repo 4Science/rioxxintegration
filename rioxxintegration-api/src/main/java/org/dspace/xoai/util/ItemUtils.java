@@ -229,7 +229,7 @@ public class ItemUtils
                     // Check if current bitstream is in original bundle + 1 of the 2 following
                     // Bitstream = primary bitstream in bundle -> true
                     // No primary bitstream found in bundle-> only the first one gets flagged as "primary"
-                    if (b.getName().equals("ORIGINAL") && (b.getPrimaryBitstream() != null || b.getPrimaryBitstream().getID() == bit.getID() || bit.getID() == bits.get(0).getID()))
+                    if ("ORIGINAL".equals(b.getName()) && (b.getPrimaryBitstream() != null && (b.getPrimaryBitstream().getID() == bit.getID() || bit.getID().equals(bits.get(0).getID()))))
                         primary = true;
                 	
                     Element bitstream = create("bitstream");
@@ -299,6 +299,9 @@ public class ItemUtils
                     bitstream.getField().add(
                             createValue("sid", bit.getSequenceID()
                                     + ""));
+						bitstream.getField().add(
+								createValue("primary", primary
+										+ ""));
                 }
             }
         }
@@ -376,13 +379,15 @@ public class ItemUtils
 		Group group = groupService.findByName(context, Group.ANONYMOUS);
 
 		for (ResourcePolicy policy : policies) {
-			if (group.equals(policy.getGroup())) {
-				Date startDate = policies.get(0).getStartDate();
-
-				if (startDate != null && startDate.after(new Date())) {
-					SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
-					bitstream.getField().add(
-							createValue("embargo", formatter.format(startDate)));
+			if(policy.getGroup()!=null) {
+				if (group.equals(policy.getGroup())) {
+					Date startDate = policies.get(0).getStartDate();
+	
+					if (startDate != null && startDate.after(new Date())) {
+						SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+						bitstream.getField().add(
+								createValue("embargo", formatter.format(startDate)));
+					}
 				}
 			}
 		}
