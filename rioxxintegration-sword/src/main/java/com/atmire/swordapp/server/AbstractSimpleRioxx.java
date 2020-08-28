@@ -22,7 +22,8 @@ public class AbstractSimpleRioxx {
     protected HashMap<String, String> dcMap = null;
     protected HashMap<String, String> atomMap = null;
     
-    private ItemService itemService = ContentServiceFactory.getInstance().getItemService();
+    protected ItemService itemService = ContentServiceFactory.getInstance()
+            .getItemService();
     
     protected SimpleRioxxMetadata getMetadata(Item item) {
         SimpleRioxxMetadataHelper simpleRioxxMetadataHelper = new SimpleRioxxMetadataHelper();

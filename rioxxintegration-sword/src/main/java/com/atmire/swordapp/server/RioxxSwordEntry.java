@@ -7,19 +7,22 @@
  */
 package com.atmire.swordapp.server;
 
-import com.atmire.swordapp.server.util.*;
-import java.util.*;
-import org.apache.abdera.model.*;
-import org.apache.commons.lang.*;
-import org.dspace.authority.factory.AuthorityServiceFactory;
-import org.dspace.authority.service.AuthorityValueService;
-import org.dspace.content.authority.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.abdera.model.Element;
+import org.apache.abdera.model.Entry;
+import org.apache.commons.lang.StringUtils;
 import org.dspace.content.authority.factory.ContentAuthorityServiceFactory;
 import org.dspace.content.authority.service.MetadataAuthorityService;
-import org.dspace.core.*;
 import org.dspace.services.ConfigurationService;
 import org.dspace.services.factory.DSpaceServicesFactory;
-import org.swordapp.server.*;
+import org.swordapp.server.SwordEntry;
+
+import com.atmire.swordapp.server.util.SimpleRioxxMetadataHelper;
 
 public class RioxxSwordEntry extends SwordEntry {
 
@@ -33,8 +36,8 @@ public class RioxxSwordEntry extends SwordEntry {
         super(entry);
         SimpleRioxxMetadataHelper simpleRioxxMetadataHelper = new SimpleRioxxMetadataHelper();
         dcMap = simpleRioxxMetadataHelper.getDcMap();
-        String namespaces = configurationService.getProperty("swordv2-server.swordv2.accepted.namespaces");
-        for (String namespace : namespaces.split(",")) {
+        String[] namespaces = configurationService.getArrayProperty("swordv2-server.swordv2.accepted.namespaces");
+        for (String namespace : namespaces) {
             acceptedNamespaces.add(namespace.trim());
         }
     }
@@ -66,9 +69,9 @@ public class RioxxSwordEntry extends SwordEntry {
     }
 
     private String constructValueCombination(Element element, String field, String value) {
-        String attributeNames = ConfigurationManager.getProperty("swordv2-server", "attributes."+ field);
-        if (StringUtils.isNotBlank(attributeNames)) {
-            for (String attributeName : attributeNames.split(",")) {
+        String[] attributeNames = configurationService.getArrayProperty("swordv2-server.attributes."+ field);
+        if (attributeNames!=null) {
+            for (String attributeName : attributeNames) {
 
                 value = element.getAttributeValue(attributeName.trim()) + "::" + value;
             }

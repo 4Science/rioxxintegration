@@ -29,7 +29,9 @@ import org.dspace.authority.indexer.AuthorityIndexingService;
 import org.dspace.authority.orcid.Orcidv2AuthorityValue;
 import org.dspace.authority.service.AuthorityService;
 import org.dspace.authority.service.AuthorityValueService;
+import org.dspace.authorize.AuthorizeException;
 import org.dspace.content.Item;
+import org.dspace.content.MetadataField;
 import org.dspace.content.MetadataValue;
 import org.dspace.content.authority.Choices;
 import org.dspace.content.authority.factory.ContentAuthorityServiceFactory;
@@ -143,10 +145,24 @@ public class RIOXXConsumer implements Consumer {
                         }
                     }
                 }
-                for (MetadataValue m : itemService.getMetadata(item, "*", "*", "*", "*")) {
+                Set<MetadataField> metadataToRefresh = new HashSet<MetadataField>();
+                for (MetadataValue m : itemService.getMetadata(item, Item.ANY, Item.ANY, Item.ANY, Item.ANY)) {
                     if (metadataAuthorityService.isAuthorityControlled(m.getMetadataField().toString('_'))) {
-                        handleAuthorityControlledMetadatum(ctx, item, m);
+                        metadataToRefresh.add(m.getMetadataField());
                     }
+                }
+                for(MetadataField metadataToRefreshItem : metadataToRefresh) {
+                	String schema = metadataToRefreshItem.getMetadataSchema().getName();
+					String element = metadataToRefreshItem.getElement();
+					String qualifier = metadataToRefreshItem.getQualifier();
+					List<MetadataValue> list = itemService.getMetadata(item, schema, element, qualifier, Item.ANY);
+					itemService.clearMetadata(ctx, item, schema, element, qualifier, Item.ANY);
+                	for (MetadataValue m : list) {
+                		boolean handled = handleAuthorityControlledMetadatum(ctx, item, m);
+                		if(!handled) {
+                			itemService.addMetadata(ctx, item, schema, element, qualifier, m.getLanguage(), m.getValue(), m.getAuthority(), m.getConfidence());
+                		}
+                	}
                 }
                 itemService.update(ctx, item);
             }
@@ -155,7 +171,7 @@ public class RIOXXConsumer implements Consumer {
 
     }
 
-    private void handleAuthorityControlledMetadatum(Context ctx, Item item, MetadataValue m) throws SQLException {
+    private boolean handleAuthorityControlledMetadatum(Context ctx, Item item, MetadataValue m) throws SQLException, AuthorizeException {
         String[] split = m.getValue().split("::");
         String email = "";
         String name = "";
@@ -183,14 +199,17 @@ public class RIOXXConsumer implements Consumer {
         if(StringUtils.isNotBlank(orcidID) && StringUtils.isNotBlank(name)) {
             if (orcidID.matches(ORCID_ID_SYNTAX)) {
                 handleOrcidMetadatum(ctx, item, m, orcidID, name, email);
+                return true;
             } else {
                 PersonAuthorityValue personAuthorityValue = handlePersonAuthority(ctx, m, name, email);
                 replaceMetadatumWithAuthority(ctx, item, m, name, personAuthorityValue.getId());
+                return true;
             }
         }
+        return false;
     }
 
-    private void handleOrcidMetadatum(Context ctx, Item item, MetadataValue m, String orcidID, String name, String email) throws SQLException {
+    private void handleOrcidMetadatum(Context ctx, Item item, MetadataValue m, String orcidID, String name, String email) throws SQLException, AuthorizeException {
         Orcidv2AuthorityValue authorityValue = (Orcidv2AuthorityValue) authorityValueService.findByOrcidID(ctx, orcidID);
         if (authorityValue != null) {
             if (StringUtils.isNotBlank(email) && !authorityValue.getEmails().contains(email)) {
@@ -278,24 +297,14 @@ public class RIOXXConsumer implements Consumer {
         indexingService.commit();
     }
 
-    private void replaceMetadatumWithAuthority(Context context, Item item, MetadataValue m, String name, String id) throws SQLException {
+    private void replaceMetadatumWithAuthority(Context context, Item item, MetadataValue m, String name, String id) throws SQLException, AuthorizeException {
     	
     	String schema = m.getMetadataField().getMetadataSchema().getName();
     	String element = m.getMetadataField().getElement();
     	String qualifier = m.getMetadataField().getQualifier();
     	String language = m.getLanguage();
     	
-        List<MetadataValue> list = itemService.getMetadata(item, schema, element, qualifier, language);
-        itemService.clearMetadata(context, item, schema, element, qualifier, language);
-
-        for (MetadataValue metadatum : list) {
-            if (!metadatum.equals(m)) {
-                itemService.addMetadata(context, item, schema, element, qualifier, metadatum.getLanguage(), metadatum.getValue(), metadatum.getAuthority(), metadatum.getConfidence());
-            }
-        }
-        itemService.addMetadata(context, item, schema, element, qualifier,
-                m.getLanguage(), name, id,
-                Choices.CF_ACCEPTED);
+        itemService.addMetadata(context, item, schema, element, qualifier, language, name, id, Choices.CF_ACCEPTED);
     }
 
     public void finish(Context ctx) throws Exception {

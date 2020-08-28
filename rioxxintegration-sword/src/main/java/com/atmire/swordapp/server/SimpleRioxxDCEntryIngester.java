@@ -7,31 +7,53 @@
  */
 package com.atmire.swordapp.server;
 
-import java.io.*;
-import java.sql.*;
+import java.sql.SQLException;
 import java.util.Date;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import com.atmire.swordapp.server.util.SimpleRioxxMetadataHelper;
-import net.cnri.util.*;
-import org.dspace.authorize.*;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.log4j.Logger;
+import org.dspace.authorize.AuthorizeException;
 import org.dspace.content.Collection;
+import org.dspace.content.DCDate;
+import org.dspace.content.DSpaceObject;
+import org.dspace.content.Item;
+import org.dspace.content.MetadataValue;
+import org.dspace.content.WorkspaceItem;
 import org.dspace.content.factory.ContentServiceFactory;
 import org.dspace.content.service.WorkspaceItemService;
-import org.dspace.content.*;
-import org.dspace.core.*;
-import org.dspace.core.factory.CoreServiceFactory;
-import org.dspace.sword2.*;
+import org.dspace.core.ConfigurationManager;
+import org.dspace.core.Context;
+import org.dspace.services.ConfigurationService;
+import org.dspace.services.factory.DSpaceServicesFactory;
+import org.dspace.sword2.DSpaceSwordException;
+import org.dspace.sword2.DepositResult;
+import org.dspace.sword2.SwordEntryIngester;
+import org.dspace.sword2.VerboseDescription;
 import org.dspace.util.MetadataFieldString;
 import org.dspace.util.subclasses.Metadata;
-import org.swordapp.server.*;
+import org.swordapp.server.Deposit;
+import org.swordapp.server.SwordAuthException;
+import org.swordapp.server.SwordError;
+import org.swordapp.server.SwordServerException;
+
+import com.atmire.swordapp.server.util.SimpleRioxxMetadataHelper;
+
 
 public class SimpleRioxxDCEntryIngester extends AbstractSimpleRioxx implements SwordEntryIngester {
 
+    private static final Logger log = Logger
+            .getLogger(SimpleRioxxDCEntryIngester.class);
+    
     protected HashMap<String, String> dcMap = null;
     
     private WorkspaceItemService workspaceItemService = ContentServiceFactory.getInstance().getWorkspaceItemService();
 
+    protected ConfigurationService configurationService = DSpaceServicesFactory
+            .getInstance().getConfigurationService();
+    
     public SimpleRioxxDCEntryIngester() {
         SimpleRioxxMetadataHelper simpleRioxxMetadataHelper = new SimpleRioxxMetadataHelper();
         dcMap = simpleRioxxMetadataHelper.getDcMap();
@@ -97,12 +119,25 @@ public class SimpleRioxxDCEntryIngester extends AbstractSimpleRioxx implements S
     }
 
     private void removeMetadata(Context context, Item item)
-        throws DSpaceSwordException, SQLException {
-        String raw = ConfigurationManager.getProperty("swordv2-server", "metadata.replaceable");
-        String[] parts = raw.split(",");
-        for (String part : parts) {
-            Metadata dcv = this.makeDCValue(part.trim(), null);
-            getItemService().clearMetadata(context, item, dcv.schema, dcv.element, dcv.qualifier, Item.ANY);
+            throws DSpaceSwordException
+    {
+        String[] replaceableMetadata = configurationService
+                .getArrayProperty("swordv2-server.metadata.replaceable");
+        for (String part : replaceableMetadata)
+        {
+            Metadata info = this
+                    .makeDCValue(part.trim(), null);
+            try
+            {
+                itemService
+                        .clearMetadata(context, item, info.schema, info.element,
+                                info.qualifier, Item.ANY);
+            }
+            catch (SQLException e)
+            {
+                log.error("Caught exception trying to remove metadata", e);
+                throw new DSpaceSwordException(e);
+            }
         }
     }
 
@@ -254,10 +289,14 @@ public class SimpleRioxxDCEntryIngester extends AbstractSimpleRioxx implements S
      */
     protected void setUpdatedDate(Context context, Item item, VerboseDescription verboseDescription)
         throws DSpaceSwordException, SQLException {
-        String field = ConfigurationManager.getProperty("swordv2-server", "updated.field");
-        if (field == null || "".equals(field)) {
-            throw new DSpaceSwordException("No configuration, or configuration is invalid for: sword.updated.field");
+        String field = configurationService
+                .getProperty("swordv2-server.updated.field");
+        if (StringUtils.isBlank(field))
+        {
+            throw new DSpaceSwordException(
+                    "No configuration, or configuration is invalid for: swordv2-server.updated.field");
         }
+
 
         Metadata dc = this.makeDCValue(field, null);
         getItemService().clearMetadata(context, item, dc.schema, dc.element, dc.qualifier, Item.ANY);
@@ -281,13 +320,17 @@ public class SimpleRioxxDCEntryIngester extends AbstractSimpleRioxx implements S
     protected void setSlug(Context context, Item item, String slugVal, VerboseDescription verboseDescription)
         throws DSpaceSwordException, SQLException {
         // if there isn't a slug value, don't set it
-        if (slugVal == null) {
+        if (slugVal == null)
+        {
             return;
         }
 
-        String field = ConfigurationManager.getProperty("swordv2-server", "slug.field");
-        if (field == null || "".equals(field)) {
-            throw new DSpaceSwordException("No configuration, or configuration is invalid for: sword.slug.field");
+        String field = configurationService
+                .getProperty("swordv2-server.slug.field");
+        if (StringUtils.isBlank(field))
+        {
+            throw new DSpaceSwordException(
+                    "No configuration, or configuration is invalid for: swordv2-server.slug.field");
         }
 
         Metadata dc = this.makeDCValue(field, null);
