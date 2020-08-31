@@ -3,11 +3,12 @@ This repository contains the integration addon for REF+RIOXX
 
 The original works is explained at https://github.com/atmire/RIOXX/blob/master/README.md
 
-Because the general concepts are the same follow the original contents of the guide:
+Note that the general concepts are the same, 4Science simplified the installation procedure, essentially read the [New patch installation](#Patch-installation-procedures) and [How to disable REF](#Compatibility-with-the-REF-patch)
 
 - [Introduction](#Introduction)
 	- [Areas of DSpace affected by the RIOXX patch](#Areas-of-DSpace-affected)
 	- [Areas of DSpace that have to be manually configured after applying the patch](#Areas-of-DSpace-manually-configured)
+	- [Compatibility with the REF patch](#Compatibility-with-the-REF-patch)
 - [Metadata mapping](#Metadata-mapping)
 	- [General DSpace to RIOXXTERMS metadata mapping](#General-DSpace-RIOXXTERMS)
 	- [RIOXX metadata derived from DSpace Bitstream metadata](#RIOXX-metadata-derived)
@@ -26,37 +27,32 @@ Because the general concepts are the same follow the original contents of the gu
 	    - [SWORD V2 Author attributes (ORCID and email)](#swordv2-author-attrib)
 	    - [SWORD V2 Example Ingestion with Curl](#swordv2-curl)
 - [Patch Installation Procedures](#Patch-installation-procedures)
-	- [Prerequisites](#Prerequisites)
-	- [Obtaining a recent patch file](#Obtaining-recent-patch)
-	- [Patch installation](#Patch-installation)
-		- [1. Go to the DSpace Source directory.](#goto-DSpace-Source)
-		- [2. Run the Git command to check whether the patch can be correctly applied.](#Run-git-command)
-		- [3. Apply the patch](#Apply-patch)
-		- [4. Rebuild and redeploy your repository](#Rebuild-redeploy)
-		- [5. Restart your tomcat](#Restart-tomcat)
-		- [6. Populate the RIOXX OAI-PMH end point](#Populate-RIOXX)
-		- [7. XMLUI only: Load Fundref authority data](#XMLUI-only)
-		- [8. Compatibility with the REF patch](#REF-comp)
+	- [Prerequisites](#Prerequisites)	
+	- [RIOXX Integration addon](#rioxx-integration-addon)		
+		- [1. Run the pre-requisite Git command.](#Run-git-command)
+		- [2. Rebuild and redeploy your repository](#Rebuild-redeploy)
+		- [3. Restart your tomcat](#Restart-tomcat)
+		- [4. Populate the RIOXX OAI-PMH end point](#Populate-RIOXX)
+		- [5. Load Fundref authority data](#load-fundref-data)		
 	- [Configure Submission forms or other metadata ingest mechanisms](#Configure-submission)
 - [Verification](#Verification)
 	- [RIOXX Metadata Registry](#RIOXX-metadata-registry)
-	- [Submission forms based on Atmire template](#Submission-forms-template)
+	- [Submission forms based on template](#Submission-forms-template)
 	- [OAI-PMH endpoint](#OAI-PMH-endpoint)
-- [Troubleshooting](#Troubleshooting)
-	- [Errors during the Patch Installation process](#Errors-patch-installation)
+- [Troubleshooting](#Troubleshooting)	
 	- [RIOXX test items are not visible in OAI-PMH endpoint](#RIOXX-test-OAI-PMH-endpoint)
 
 # Introduction <a name="Introduction"></a> 
 
 
-This documentation will help you deploy and configure the RIOXXv2 Application Profile for DSpace 3.X, 4.X and 5.X. The patch has been implemented in a generic way, using a configurable crosswalk. This means that changes to your existing DSpace installation are kept to the strict minimum. If you have customized your DSpace submission forms, metadata registries or OAI Crosswalks, it is possible that the default patches can't be applied to your codebase. 
+This documentation will help you deploy and configure the RIOXXv2 Application Profile for DSpace 5.10 and 6.3. The patch has been implemented in a generic way, using maven artifact. This means that changes to your existing DSpace installation could be override by this procedure.
 
 ## Areas of DSpace affected by the RIOXX patch <a name="Areas-of-DSpace-affected"></a> 
 
 Following areas of the DSpace codebase are affected by the RIOXX patch:  
 - **Metadata Registries**: a new RIOXX metadata registry will be added with a number of new fields. This does not affect your existing metadata schema's or items  
 - **OAI Endpoint**: a new RIOXX endpoint will become available in your OAI-PMH interface, in order to allow external harvesters to harvest your repository metadata in RIOXX compliant format.  
-- **SWORD V2 Endpoint (DSpace 5.7 RIOXX patch and later only)**: The SWORD V2 ingest will be improved to allow for RIOXX compliant SWORD V2 ingests into DSpace.
+- **SWORD V2 Endpoint**: The SWORD V2 ingest will be improved to allow for RIOXX compliant SWORD V2 ingests into DSpace.
 
 It is important to realize that your existing item metadata and item display pages will **NOT** be modified as part of the RIOXX patch.
 
@@ -64,10 +60,31 @@ It is important to realize that your existing item metadata and item display pag
 
 **Submission forms**: the configuration file that defines your submission forms, input-forms.xml needs to be be extended with a number of new entry options.
 
-Because the vast majority of institutions makes at least small tweaks to the submission forms, there is no opportunity to apply a patch to a standardized file. A template submission form file where the new RIOXX fields are highlighted can be found on Github:
+Because the vast majority of institutions makes at least small tweaks to the submission forms, there is no opportunity to apply a patch to a standardized file. A template submission form file where the new REF and RIOXX fields are highlighted can be found on Github:
 
-[https://github.com/atmire/RIOXX/blob/atmire-DEV/dspace/config/input-forms.xml](https://github.com/atmire/RIOXX/blob/atmire-DEV/dspace/config/input-forms.xml)
+[https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/input-forms.xml](https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/input-forms.xml)
+[https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/item-submission.xml](https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/item-submission.xml)
 See rioxxterms.* fields + value pairs + dcterms.dateAccepted
+
+Please note that we provided also example for REF only or RIOXX only input forms and submission configuration: 
+[https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/input-forms-ref.xml](https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/input-forms-ref.xml)
+[https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/input-forms-rioxx.xml](https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/input-forms-ref.xml)
+[https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/item-submission-ref.xml](https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/item-submission-ref.xml)
+[https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/item-submission-rioxx.xml](https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/item-submission-rioxx.xml)
+
+## Compatibility with the REF patch  <a name="Compatibility-with-the-REF-patch"></a>
+
+The RIOXX patch contains also the REF patch. Both are installed at the same time. But you can choose to disable REF feature.
+
+To disable REF feature turn to false the follow configuration
+1. [https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/modules/rioxx.cfg#L9](https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/modules/rioxx.cfg#L9)
+2. [https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/modules/item-compliance.cfg#L32](https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/modules/item-compliance.cfg#L32)
+
+Manually change this configuration:
+1. From [https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/input-forms.xml](https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/input-forms.xml) remove the metadata: refterms.panel and refterms.dateFirstOnline
+2. From [https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/item-submission.xml](https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/item-submission.xml) remove the step: REFExceptionStep and REFComplianceStep
+3. If you enabled the XML Workflow please remove https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/workflow.xml#L38 and https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/workflow.xml#L54
+
 
 # Metadata mapping <a name="Metadata-mapping"></a>
 
@@ -161,7 +178,7 @@ Using the 'Lookup Project' button the submitter can lookup projects that are alr
 
 if a project was not entered before, the submitter can create a new project. The new project's identifier must be filled out in the project input field and a funder to associate with the new project must be selected by using the 'Lookup Funder' button. 
 
-It is not possible to create a new funder during the submission, only existing funders can be selected. Refer to section [7. XMLUI only: Load Fundref authority data](#XMLUI-only) in the Patch Installation procedures to learn how to load funder data into DSpace.
+It is not possible to create a new funder during the submission, only existing funders can be selected. Refer to section [5. Load Fundref authority data](#load-fundref-data) in the Patch Installation procedures to learn how to load funder data into DSpace.
 
 ### configuration <a name="multiple-funders-configuration"></a> 
 
@@ -276,7 +293,7 @@ The XML schema allows for project/funder information to be supplied in two XML e
 
 <p><b>rioxxterms:project</b> 
 <br> 
-The RIOXX patch will attempt to match the rioxxterms:project details against funders in the fundref-registry (see <a href="https://github.com/atmire/RIOXX#XMLUI-only">https://github.com/atmire/RIOXX#XMLUI-only</a>) first on funder_id and, as a fallback, on funder_name. If a match is found, the DSpace metadata fields rioxxterms.identifier.project, rioxxterms.funder and rioxxterms.funder.project will be filled with respectively the Project/grant-number, the Funder name, and the internal key registered in DSpace for this project. If no match can be found, the metadata field rioxxterms.newfunderprojectpair will be filled with the full details, with the intention that these are curated by a repository manager/reviewer and funder details manually added to the registry.</p> 
+The RIOXX patch will attempt to match the rioxxterms:project details against funders in the fundref-registry (see [5. Load Fundref authority data](#load-fundref-data)) first on funder_id and, as a fallback, on funder_name. If a match is found, the DSpace metadata fields rioxxterms.identifier.project, rioxxterms.funder and rioxxterms.funder.project will be filled with respectively the Project/grant-number, the Funder name, and the internal key registered in DSpace for this project. If no match can be found, the metadata field rioxxterms.newfunderprojectpair will be filled with the full details, with the intention that these are curated by a repository manager/reviewer and funder details manually added to the registry.</p> 
 <p><b>rioxxterms.newfunderprojectpair</b> 
 <br> 
 This metadata field is created when no funder is found in the DSpace Funder Registry that matches that supplied via SWORD in the rioxxterms:project XML element. The value of this field is filled in with the information received via SWORD in this format: 
@@ -325,50 +342,26 @@ curl -X POST -v -i <*your DSpace repository*>/edit/3 -H "In-Progress: false" -H 
 
 ## Prerequisites  <a name="Prerequisites"></a> 
 
-The RIOXX application profile has been released as a "patch" for DSpace as this allows for the easiest installation process of the incremental codebase. The code needed to install and deploy the RIOXX Application Profile can be found in the *rioxx_changes.patch* patch file, which needs to be applied to your DSpace source code.
+A new simplified addon has been released by 4Science built as Maven Module. The artifacts for DSpace 5.10 and DSpace 6.3 has been released as public on <a href="https://nexus.4science.it/">4Science Nexus repository</a>
 
-**__Important note__**: Below, we will explain you how to apply the patch to your existing installation. This will affect your source code. Before applying a patch, it is **always** recommended to create backup of your DSpace source code.
-
-In order to apply the patch, you will need to locate the **DSpace source code** on your server. That source code directory contains a directory _dspace_, as well as the following files:  _LICENSE_,  _NOTICE_ ,  _README_ , ....
-
-For every release of DSpace, generally two release packages are available. One package has "src" in its name and the other one doesn't. The difference is that the release labelled "src" contains ALL of the DSpace source code, while the other release retrieves precompiled packages for specific DSpace artifacts from maven central. **The RIOXX patches were designed to work on both "src" and other release packages of DSpace**. 
+**__Important note__**: if you use DSpace 5.10 or DSpace 6.3 default versions you have to IMMEDIATELLY UPGRADE to the last line of development (5.11-SNAPSHOT or 6.4-SNAPSHOT). The activity is required because these versions may have some malfunctions due to dependencies (e.g. upgrade for Bower, JRuby, SASS dependency) or changed third party policies (e.g. GeoLite database feature for geolocation points). 
+* to upgrade your DSpace from 5.10 to 5.11-SNAPSHOT use https://github.com/4Science/rioxxintegration/releases/download/5.10.0/jisc-from-5_10-to-5_11-patch.diff
+* to upgrade your DSpace from 6.3 to 6.4-SNAPSHOT (commit 7e738a0bcc52461ee6e5f4758ebb3d5052bf1ebf) use https://github.com/4Science/rioxxintegration/releases/download/6.3.0/jisc-from-6_3-to-7e738a0bcc52461ee6e5f4758ebb3d5052bf1ebf-patch.diff 
 
 To be able to install the patch, you will need the following prerequisites:
 
-* A running DSpace 3.x, 4.x or 5.x instance. 
-* Git should be installed on the machine. The patch will be applied using several git commands as indicated in the next section. 
+* A running DSpace 5.10 or 6.3 instance. 
+* Git should be installed on the machine to apply the prerequisite patch.
 
-## Obtaining a recent patch file <a name="Obtaining-recent-patch"></a>
+## RIOXX Integration addon <a name="rioxx-integration-addon"></a>
 
-Atmire's modifications to a standard DSPace for RIOXX compliance are tracked on Github. The newest patch can therefore be generated from git.
+After upgrading your DSpace at 5.11-SNAPSHOT or 6.4-SNAPSHOT (currently the released date of stable versions is not yet known) you can install the patch to download the RIOXX Integration during the default DSpace build procedure. The patch upgrades the Maven POM files to retrieve and install the RIOXX code customizations.
 
-DSPACE 5.0,5.1 [https://github.com/atmire/RIOXX/compare/unmodified…stable_51.diff](https://github.com/atmire/RIOXX/compare/unmodified…stable_51.diff)  
-DSPACE 5.2 [https://github.com/atmire/RIOXX52/compare/unmodified…stable_52.diff](https://github.com/atmire/RIOXX52/compare/unmodified…stable_52.diff)  
-DSPACE 5.3-5.6 [https://github.com/atmire/RIOXX53/compare/unmodified…stable_53.diff](https://github.com/atmire/RIOXX53/compare/unmodified…stable_53.diff)  
-DSPACE 5.7 [https://github.com/atmire/RIOXX57/compare/unmodified…stable_57.diff](https://github.com/atmire/RIOXX57/compare/unmodified…stable_57.diff)
-
-DSPACE 4.x [https://github.com/atmire/RIOXX4x/compare/unmodified…stable_4x.diff](https://github.com/atmire/RIOXX4x/compare/unmodified…stable_4x.diff)
-  
-DSPACE 3.x [https://github.com/atmire/RIOXX3x/compare/unmodified...latest.patch](https://github.com/atmire/RIOXX3x/compare/unmodified...latest.patch)
+* dependencies for 5.x: https://github.com/4Science/rioxxintegration/releases/download/5.10.0/jisc-5_10-patch.diff
+* dependencies for 6.x: https://github.com/4Science/rioxxintegration/releases/download/6.3.0/jisc-6_3-patch.diff
 
 
-
-
-## Patch installation <a name="Patch-installation"></a>
-
-To install the patch, the following steps will need to be performed. 
-
-### 1. Go to the DSpace Source directory. <a name="goto-DSpace-Source"></a>
-
-This folder should have a structure similar to:   
-dspace  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;   modules  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    config  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    ...  
-pom.xml
-
-
-### 2. Run the Git command to check whether the patch can be correctly applied. <a name="Run-git-command"></a>
+### 1. Run the pre-requisite Git command. <a name="run-git-command"></a>
 
 Run the following command where <patch file> needs to be replaced with the name of the patch:
 
@@ -376,10 +369,9 @@ Run the following command where <patch file> needs to be replaced with the name 
 git apply --check <patch file>
 ```
 
-This command will return whether it is possible to apply the patch to your installation. This should pose no problems in case the DSpace is not customized or in case not much customizations are present.   
+This command will return whether it is possible to apply the patch to your installation. This should pose no problems in case the DSpace is not customized or in case not many customizations are present.   
 In case, the check is successful, the patch can be installed without any problems. Otherwise, you will have to merge some changes manually.
 
-### 3. Apply the patch <a name="Apply-patch"></a>
 
 To apply the patch, the following command should be run where <patch file> is replaced with the name of the patch file. 
 
@@ -389,30 +381,49 @@ git apply --whitespace=nowarn --reject <patch file>
 
 This command will tell git to apply the patch and ignore unharmful whitespace issues. The `--reject` flag instructs the command to continue when conflicts are encountered and saves the corresponding code hunks to a `.rej` file so you can review and apply them manually later on. Before continuing to the next step, you have to resolve all merge conflicts indicated by the `.rej` files. After solving the merge conflicts, remove all the `.rej` files.
 
-### 4. Rebuild and redeploy your repository <a name="Rebuild-redeploy"></a>
 
-After the patch has been applied, the repository will need to be rebuild.   
+For example to install the 5.x RIOXX Integration plugin on top of a 5.10 DSpace version you have:
+
+```
+git checkout dspace-5.10
+git apply --whitespace=nowarn --reject <jisc-from-5_10-to-5_11-patch.diff>
+git apply --whitespace=nowarn --reject <jisc-5_10-patch.diff>
+```
+
+### 2. Rebuild and redeploy your repository <a name="Rebuild-redeploy"></a>
+
+After the patch has been applied, the repository will need to be rebuilt.   
 DSpace repositories are typically built using the Maven and deployed using Ant. 
 
-Specifically for DSpace 3 and DSpace 4, it is important to know that the database changes to add the rioxx fields to the metadata registry, are called in the "update_registries" ant target.
-This ant target is part of "ant update". However, it is not part of "ant fresh_install". 
+**__Important note__**: RIOXX and REF Integration are fully supported only with XMLUI Mirage2 and XML Workflow
+
+To build application please use:
+
+```
+mvn clean -U package -Dmirage2.on=true
+```
+
+The new RIOXX integration will be downloaded automatically from 4Science Nexus Repository and installed by the build procedure (Maven/Ant)
+
+The new metadata fields needed by RIOXX integration are automatically installed during the startup of the application thanks to the Flyway utility.
 
 If you are not seeing the fields in your registry, you can import the rioxx fields manually by executing:
 
 ```
 dspace/bin/dspace dsrun org.dspace.administer.MetadataImporter -f <dspace.dir>/config/registries/rioxxterms-types.xml -u
-``` 
-### 5. Restart your tomcat <a name="Restart-tomcat"></a>
+```
 
-After the repository has been rebuild and redeployed, the tomcat will need to be restarted to bring the changes to production. 
+### 3. Restart your tomcat <a name="Restart-tomcat"></a>
 
-### 6. Populate the RIOXX OAI-PMH end point <a name="Populate-RIOXX"></a>
+After the repository has been rebuilt and redeployed, the tomcat will need to be restarted to bring the changes to production. 
+
+### 4. Populate the RIOXX OAI-PMH end point <a name="Populate-RIOXX"></a>
  
 To Populate the RIOXX end point, used for harvesting, run the following command: 
 
 ```
 [dspace]/bin/dspace oai import -c
-```    
+```
 
 This will Populate the RIOXX OAI endpoint that will be available on 
 
@@ -423,9 +434,10 @@ This will Populate the RIOXX OAI endpoint that will be available on
 If you want to avoid multiple manual executions of this script during testing, you can always add it to your scheduled tasks (crontab), and have it execute every hour or every 15 minutes.  
 Do note that the more items your repository contains, the more resource intensive this task is. Be careful scheduling this task frequently on production systems! On production systems we still highly recommend a daily frequency.
 
-### 7. XMLUI only: Load Fundref authority data <a name="XMLUI-only"></a>
 
-DSpace 5 comes with a new SOLR based infrastructure for authority control, originally used for storing authority data from ORCID. For RIOXX, this infrastructure was used to hold Fundref authority data.  
+### 5. Load Fundref authority data <a name="load-fundref-data"></a>
+
+From DSpace 5 there is a new SOLR based infrastructure for authority control, originally used for storing authority data from ORCID. For RIOXX, this infrastructure was used to hold Fundref authority data.  
 Even though the SOLR core with authority data can be enabled for JSPUI, there is no support yet for lookup in this registry through the submission forms in JSPUI.
 
 As the source, DSpace relies on the RDF file published by Crossref at:  
@@ -435,6 +447,8 @@ More information about this file is available at:
 [http://help.crossref.org/fundref-registry](http://help.crossref.org/fundref-registry)
 
 Download this file to your DSpace server.
+
+**__Important note__**: since the file is large, you may need to give more memory to your "dspace" script - you can open in edit the "dspace" file and find the "-Xmx" parameter. Set it up to give 2 Gigabytes of memory "-Xmx2G".
 
 The "PopulateFunderAuthorityFromXML" script will add new funders as authorities for inclusion in rioxxterms.project, where funder and project id are exposed.  
 If you are executing the script for the first time, your SOLR authority cache will be loaded with all funders present in the fundref export.  
@@ -450,38 +464,11 @@ arguments:
 -f: The RDF XML file containing the funder authorities  
 -t: Test if the script works correctly. No changes will be applied.
 
-Note: Using the above PopulateFunderAuthorityFromXML script is the only way to create funders in DSpace.
-If an item is ingested into DSpace, for example by using SWORD V2, and this item contains a funder project pair with a funder that does not yet exists in DSpace, then DSpace will not attempt to create this funder but will instead store the project funder pair in metadata field workflow.newfunderprojectpair. 
-
-### 8. Compatibility with the REF patch <a name="#REF-comp"></a>
-
-The RIOXX patch is compatible with the REF patch (https://github.com/atmire/REF). Both are often installed at the same time.
-The following files are updated by both patches and require merge conflicts to be managed manually :
-```
-dspace/modules/xmlui/src/main/webapp/themes/Mirage/lib/xsl/custom/core/forms.xsl
-dspace/modules/xmlui/src/main/webapp/themes/Mirage/lib/css/style.css
-dspace/modules/xmlui/src/main/webapp/themes/Mirage/Mirage.xsl
-dspace/modules/xmlui/src/main/webapp/i18n/messages.xml
-dspace/modules/xmlui/src/main/java/org/dspace/app/xmlui/objectmanager/ItemAdapter.java
-dspace/modules/xmlui-mirage2/src/main/webapp/themes/Mirage2/xsl/theme.xsl
-dspace/modules/xmlui-mirage2/src/main/webapp/themes/Mirage2/xsl/custom/core/forms.xsl
-dspace/modules/xmlui-mirage2/src/main/webapp/themes/Mirage2/styles/_style.scss
-dspace/modules/additions/src/main/java/org/dspace/storage/rdbms/DatabaseRegistryUpdater.java
-dspace/modules/additions/src/main/java/org/dspace/scripts/Script.java
-dspace/modules/additions/src/main/java/org/dspace/scripts/ContextScript.java
-dspace/modules/additions/pom.xml
-dspace/config/registries/rioxxterms-types.xml
-dspace/config/input-forms.xml
-dspace/config/dspace.cfg
-```
+Note: Using the above PopulateFunderAuthorityFromXML script is the only way to create funders in DSpace. If an item is ingested into DSpace, for example by using SWORD V2, and this item contains a funder project pair with a funder that does not yet exists in DSpace, then DSpace will not attempt to create this funder but will instead store the project funder pair in metadata field workflow.newfunderprojectpair. 
 
 ## Configure Submission forms or other metadata ingest mechanisms <a name="Configure-submission"></a>
 
-Now that the new fields are present in your metadata schema's, you have to ensure that these fields can be filled. If your institution is relying on manual entry using the DSpace submission forms, you can go over the template input-forms.xml file on Github to see how the different new RIOXX fields can be included:
-
-[https://github.com/atmire/RIOXX/compare/rc1...master](https://github.com/atmire/RIOXX/compare/rc1...master)
-
-If you are relying on automated ingests using SWORD or integrations with your CRIS system, you will likely need to customize the mapping and integration with those systems. This is beyond the scope of the patch and this documentation.
+Now that the new fields are present in your metadata schema's, you have to ensure that these fields can be filled. If your institution is relying on manual entry using the DSpace submission forms, you can go over the template input-forms.xml file on Github to see how the different new RIOXX fields can be included. If you are relying on automated ingests using SWORD or integrations with your CRIS system, you will likely need to customize the mapping and integration with those systems. This is beyond the scope of the patch and this documentation.
 
 Note that simply adding the new RIOXX fields to the existing DSpace fields may create confusion for your end users. For example, the DSpace default "sponsor" field is similar to the RIOXX specific project and funder linking. Likewise, the "File Description" field that DSpace offers in the file upload dialog, has a similar purpose than the RIOXX "version" field. It is recommended to go over your submission forms entirely to verify that it is clear for your end users which fields are used for which purpose. Possibly, you may want to remove or repurpose existing DSpace default fields.
 
@@ -492,11 +479,11 @@ Note that simply adding the new RIOXX fields to the existing DSpace fields may c
 As an administrator, navigate to the standard DSpace administrator page "Registries >> Metadata".  
 On this page, you should be able to see the new RIOXX metadata schema. When clicking on the link, you should see the different fields in the metadata schema. This new registry shouldn't be empty.
 
-## Submission forms based on Atmire template <a name="Submission-forms-template"></a>
+## Submission forms based on template <a name="Submission-forms-template"></a>
 
-This verification assumes that you have modified your input-forms.xml based on Atmire's template on Github:
+This verification assumes that you have modified your input-forms.xml based on:
 
-[https://github.com/atmire/RIOXX/compare/rc1...master](https://github.com/atmire/RIOXX/compare/rc1...master)
+[https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/input-forms.xml](https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/input-forms.xml)
 
 Start the submission of a new item in a DSpace collection that uses our custom submission form config.  
 After the collection selection, a custom step is included to support adding multiple funders and project IDs. In this step you should be able to add this field:
@@ -544,28 +531,6 @@ There is a discrepancy between the examples listed in http://rioxx.net/v2-0-fina
 In the DSpace RIOXX OAI-PMH endpoint, we have chosen to follow the XSD and to expose the rioxxterms: namespace for the funder_name and funder_id attributes.
 
 # Troubleshooting <a name="Troubleshooting"></a>
-
-## Errors during the Patch Installation process <a name="Errors-patch-installation"></a>
-
-If you are receiving errors similar to the message below, then you are most likely using the **wrong directory** (i.e., not the parent directory of your DSpace installation). Please make sure that the current directory contains a directory called "dspace", which contains (amongst others) the subdirectories "bin", "config", "modules" and "solr". If this is not the case, then you will most probably receive errors such as:
-
-
-```
-error: dspace/config/crosswalks/oai/xoai.xml: No such file or directory   
-...
-```
-
-
-Another problem could occur if the DSpace installation has been customized in such a way that the RIOXX Application Profile patch cannot be applied with creating versioning conflicts with your own customizations. This will trigger errors similar to the message below:
-
-    
-```
-...             
-error: patch failed: dspace/pom.xml:62          
-error: dspace/pom.xml: patch does not apply            
-...                
-```
-
 
 ## RIOXX test items are not visible in OAI-PMH endpoint <a name="RIOXX-test-OAI-PMH-endpoint"></a>
 
