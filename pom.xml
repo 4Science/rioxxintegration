@@ -3,7 +3,7 @@
 
 	<groupId>it.4science.dspace</groupId>
 	<artifactId>rioxxintegration</artifactId>
-	<version>5.10.0-SNAPSHOT</version>
+	<version>5.10.0</version>
 	<organization>
 		<url>http://www.4science.it/en/</url>
 		<name>4Science</name>
@@ -12,9 +12,9 @@
 	<name>4Science Ref and Rioxx Patch</name>
 
 	<scm>
-		<connection>scm:git:https://github.com/4Science/DSpace-RefRioxx.git</connection>
-		<developerConnection>scm:git:https://github.com/4Science/DSpace-RefRioxx.git</developerConnection>
-		<url>https://github.com/4Science/DSpace-RefRioxx.git</url>
+		<connection>scm:git:https://github.com/4Science/rioxxintegration.git</connection>
+		<developerConnection>scm:git:https://github.com/4Science/rioxxintegration.git</developerConnection>
+		<url>https://github.com/4Science/rioxxintegration.git</url>
 		<tag>1.0</tag>
 	</scm>
 
@@ -40,7 +40,7 @@
 		</snapshotRepository>
 		<site>
 			<id>website</id>
-			<url>https://github.com/4Science/DSpace-RefRioxx/wiki</url>
+			<url>https://github.com/4Science/rioxxintegration/wiki</url>
 		</site>
 	</distributionManagement>
 
