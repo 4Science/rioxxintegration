@@ -7,6 +7,16 @@
  */
 package org.dspace.authority.orcid;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrInputDocument;
@@ -15,9 +25,11 @@ import org.dspace.authority.AuthorityValueGenerator;
 import org.dspace.authority.PersonAuthorityValue;
 import org.dspace.utils.DSpace;
 import org.orcid.jaxb.model.common_v2.ExternalId;
-import org.orcid.jaxb.model.record_v2.*;
-
-import java.util.*;
+import org.orcid.jaxb.model.record_v2.ExternalIdentifiers;
+import org.orcid.jaxb.model.record_v2.KeywordType;
+import org.orcid.jaxb.model.record_v2.NameType;
+import org.orcid.jaxb.model.record_v2.Person;
+import org.orcid.jaxb.model.record_v2.ResearcherUrlType;
 
 /**
  * @author Jonas Van Goolen (jonas at atmire dot com)
@@ -148,6 +160,21 @@ public class Orcidv2AuthorityValue extends PersonAuthorityValue {
         this.setValue(this.getName());
 
     }
+    
+	@Override
+	public void setValues(SolrDocument document) {
+		super.setValues(document);
+		this.orcid_id = ObjectUtils.toString(document.getFieldValue("orcid_id"));
+		for (String key : document.getFieldNames()) {
+			if (key.startsWith("label_")) {
+				String keyInternalMap = key.substring(key.indexOf("_") + 1);
+				Collection<Object> valuesSolr = document.getFieldValues(key);
+				for (Object valueInternal : valuesSolr) {
+					addOtherMetadata(keyInternalMap, (String) valueInternal);
+				}
+			}
+		}
+	}    
 
     /**
      * Makes an instance of the AuthorityValue with the given information.
