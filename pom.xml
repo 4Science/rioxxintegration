@@ -149,7 +149,6 @@
 				<activeByDefault>false</activeByDefault>
 			</activation>
 			<modules>
-				<module>rioxxintegration-config</module>			
 				<module>rioxxintegration-api</module>
 				<module>rioxxintegration-xmlui</module>
 				<module>rioxxintegration-sword</module>
