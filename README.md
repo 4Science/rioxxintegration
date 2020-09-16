@@ -1,7 +1,7 @@
 # DSpace Ref+Rioxx by 4Science
 This repository contains the integration addon for REF+RIOXX
 
-The original works is explained at https://github.com/atmire/RIOXX/blob/master/README.md
+The original work is explained at https://github.com/atmire/RIOXX/blob/master/README.md
 
 Note that the general concepts are the same, 4Science simplified the installation procedure, essentially read the [New patch installation](#Patch-installation-procedures) and [How to disable REF](#Compatibility-with-the-REF-patch)
 
@@ -45,7 +45,7 @@ Note that the general concepts are the same, 4Science simplified the installatio
 # Introduction <a name="Introduction"></a> 
 
 
-This documentation will help you deploy and configure the RIOXXv2 Application Profile for DSpace 5.10 and 6.3. The patch has been implemented in a generic way, using maven artifact. This means that changes to your existing DSpace installation could be override by this procedure.
+This documentation will help you deploy and configure the RIOXXv2 Application Profile for DSpace 5.10 and 6.3. The patch has been implemented in a generic way, using a maven artifact. This means that changes to your existing DSpace installation could be overridden by this procedure.
 
 ## Areas of DSpace affected by the RIOXX patch <a name="Areas-of-DSpace-affected"></a> 
 
@@ -58,25 +58,27 @@ It is important to realize that your existing item metadata and item display pag
 
 ## Areas of DSpace that have to be manually configured after applying the patch  <a name="Areas-of-DSpace-manually-configured"></a>
 
-**Submission forms**: the configuration file that defines your submission forms, input-forms.xml needs to be be extended with a number of new entry options.
+**Submission forms**: the configuration file that defines your submission forms, **input-forms.xml** needs to be be extended with a number of new entry options.
 
-Because the vast majority of institutions makes at least small tweaks to the submission forms, there is no opportunity to apply a patch to a standardized file. A template submission form file where the new REF and RIOXX fields are highlighted can be found on Github:
+Because the vast majority of institutions make at least small tweaks to the submission forms, there is no opportunity to apply a patch to a standardized file. A template submission form file where the new REF and RIOXX fields are highlighted can be found on Github:
 
-[https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/input-forms.xml](https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/input-forms.xml)
-[https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/item-submission.xml](https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/item-submission.xml)
-See rioxxterms.* fields + value pairs + dcterms.dateAccepted
+[https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/input-forms.xml](https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/input-forms.xml) 
+[https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/item-submission.xml](https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/item-submission.xml) 
 
-Please note that we provided also example for REF only or RIOXX only input forms and submission configuration: 
+See rioxxterms.* fields + value pairs + dcterms.dateAccepted 
+
+Please note that we have also provided examples for *REF only* or *RIOXX only* input forms and submission configuration: 
 [https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/input-forms-ref.xml](https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/input-forms-ref.xml)
-[https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/input-forms-rioxx.xml](https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/input-forms-ref.xml)
 [https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/item-submission-ref.xml](https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/item-submission-ref.xml)
+
+[https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/input-forms-rioxx.xml](https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/input-forms-rioxx.xml)
 [https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/item-submission-rioxx.xml](https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/item-submission-rioxx.xml)
 
 ## Compatibility with the REF patch  <a name="Compatibility-with-the-REF-patch"></a>
 
 The RIOXX patch contains also the REF patch. Both are installed at the same time. But you can choose to disable REF feature.
 
-To disable REF feature turn to false the follow configuration
+To disable the REF feature set the follow configuration to **false**:
 1. [https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/modules/rioxx.cfg#L9](https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/modules/rioxx.cfg#L9)
 2. [https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/modules/item-compliance.cfg#L32](https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/modules/item-compliance.cfg#L32)
 
@@ -88,7 +90,7 @@ Manually change this configuration:
 
 # Metadata mapping <a name="Metadata-mapping"></a>
 
-Before diving into the process of installing the RIOXX patch, it is crucial that you take note of the specific DSpace=>RIOXX metadata mapping that this patch implements. Your use of the different dc and dcterms fields in DSpace may be different than a standard installation, in which case you may need to do some additional activities before or after applying the patch.
+Before diving into the process of installing the RIOXX patch, it is crucial that you take note of the specific DSpace=>RIOXX metadata mapping that this patch implements. Your use of the different dc and dcterms fields in DSpace may be different from a standard installation, in which case you may need to do some additional activities before or after applying the patch.
 
 The following table lists the different metadata elements, according to the order specified in [http://rioxx.net/v2-0-final/](http://rioxx.net/v2-0-final/).  
 The DSpace metadata column indicates where the corresponding RIOXX elements are stored in the DSpace metadata.
