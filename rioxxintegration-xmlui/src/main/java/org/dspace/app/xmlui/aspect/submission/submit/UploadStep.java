@@ -22,9 +22,10 @@ import org.apache.cocoon.environment.SourceResolver;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
-import org.dspace.app.sherpa.SHERPAJournal;
-import org.dspace.app.sherpa.SHERPAPublisher;
-import org.dspace.app.sherpa.SHERPAResponse;
+import org.dspace.app.sherpa.v2.SHERPAJournal;
+import org.dspace.app.sherpa.v2.SHERPAPublisher;
+import org.dspace.app.sherpa.v2.SHERPAResponse;
+import org.dspace.app.sherpa.v2.SHERPASystemMetadata;
 import org.dspace.app.sherpa.submit.SHERPASubmitService;
 import org.dspace.app.util.DCInputsReader;
 import org.dspace.app.util.DCInputsReaderException;
@@ -53,6 +54,7 @@ import org.dspace.content.Item;
 import org.dspace.content.factory.ContentServiceFactory;
 import org.dspace.content.service.ItemService;
 import org.dspace.core.ConfigurationManager;
+import org.dspace.services.factory.DSpaceServicesFactory;
 import org.dspace.utils.DSpace;
 import org.xml.sax.SAXException;
 
@@ -384,13 +386,16 @@ public class UploadStep extends AbstractSubmissionStep
 
 
     /**
-     * Sherpa romeo submission support
+     * Sherpa RoMEO submission support.
+     * @param item the item in question.
+     * @param divIn add to this division.
+     * @throws org.dspace.app.xmlui.wing.WingException passed through.
      */
 
-    public void make_sherpaRomeo_submission(Item item, Division divIn) throws WingException {
+    public void make_sherpaRomeo_submission(Item item, Division divIn)
+            throws WingException {
 
-
-        if (ConfigurationManager.getBooleanProperty("webui.submission.sherparomeo-policy-enabled", true)){
+        if (DSpaceServicesFactory.getInstance().getConfigurationService().getBooleanProperty("webui.submission.sherparomeo-policy-enabled", true)){
 
             SHERPASubmitService sherpaSubmitService = new DSpace().getSingletonService(SHERPASubmitService.class);
 
@@ -407,27 +412,46 @@ public class UploadStep extends AbstractSubmissionStep
                     SHERPAResponse shresp = sherpaSubmitService.searchRelatedJournalsByISSN(issnsIterator.next());
 
                     java.util.List<SHERPAJournal> journals = shresp.getJournals();
-                    java.util.List<SHERPAPublisher> publishers = shresp.getPublishers();
+                    SHERPASystemMetadata metadata = shresp.getMetadata();
 
                     if (CollectionUtils.isNotEmpty(journals)) {
                         for (SHERPAJournal journ : journals) {
+
+                            java.util.List<SHERPAPublisher> publishers = journ.getPublishers();
 
                             List sherpaList = div.addList("sherpaList" + (i + 1), "simple", "sherpaList");
                             sherpaList.addItem().addFigure(contextPath + "/static/images/" + (i == 0 ? "romeosmall" : "clear") + ".gif", "http://www.sherpa.ac.uk/romeo/", "sherpaLogo");
 
                             sherpaList.addItem().addHighlight("sherpaBold").addContent(T_sherpa_journal);
-                            sherpaList.addItem(journ.getTitle() + " (" + journ.getIssn() + ")");
+
+                            // Get first title from list (in v2 this is now an array)
+                            String title = "";
+                            String issn = "";
+                            String url = "https://v2.sherpa.ac.uk/romeo/";
+                            if (CollectionUtils.isNotEmpty(journ.getIssns())) {
+                                issn = journ.getIssns().get(0);
+                            }
+                            if (CollectionUtils.isNotEmpty(journ.getTitles())) {
+                                title = journ.getTitles().get(0);
+                            }
+                            if (null != metadata.getUri()) {
+                                url = metadata.getUri();
+                            }
+
+
+                            sherpaList.addItem(title + " (" + issn + ")");
 
                             if(CollectionUtils.isNotEmpty(publishers)) {
                                 SHERPAPublisher pub = publishers.get(0);
-                            sherpaList.addItem().addHighlight("sherpaBold").addContent(T_sherpa_publisher);
-                            sherpaList.addItemXref(pub.getHomeurl(), pub.getName());
+                                sherpaList.addItem().addHighlight("sherpaBold").addContent(T_sherpa_publisher);
+                                sherpaList.addItemXref(pub.getUri(), pub.getName());
 
-                            sherpaList.addItem().addHighlight("sherpaBold").addContent(T_sherpa_colour);
-                            sherpaList.addItem().addHighlight("sherpaStyle " + pub.getRomeocolour()).addContent(message("xmlui.aspect.sherpa.submission." + pub.getRomeocolour()));
+                                // ROMeO colours are deprecated and should not be used any more
+                                //sherpaList.addItem().addHighlight("sherpaBold").addContent(T_sherpa_colour);
+                                //sherpaList.addItem().addHighlight("sherpaStyle " + pub.getRomeocolour()).addContent(message("xmlui.aspect.sherpa.submission." + pub.getRomeocolour()));
                             }
 
-                            sherpaList.addItem().addXref("http://www.sherpa.ac.uk/romeo/search.php?issn=" + journ.getIssn(), T_sherpa_more, "sherpaMoreInfo");
+                            sherpaList.addItem().addXref(url, T_sherpa_more, "sherpaMoreInfo");
 
                             i = i + 1;
                         }
