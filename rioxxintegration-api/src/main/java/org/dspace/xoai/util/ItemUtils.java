@@ -192,11 +192,13 @@ public class ItemUtils
 				if (authorityValue!=null) {
 					if (authorityValue instanceof FunderAuthorityValue) {
 						String id = ((FunderAuthorityValue) authorityValue).getFunderID();
-						valueElem.getField().add(createValue("authorityID", "http://dx.doi.org/" + id));
+						valueElem.getField().add(createValue("authorityID", "http://dx.doi.org/" + id));						
+						valueElem.getField().add(createValue(val.getAuthority(), "http://dx.doi.org/" + id));						
 
 					} else if (authorityValue instanceof Orcidv2AuthorityValue) {
 						String id = ((Orcidv2AuthorityValue) authorityValue).getOrcid_id();
 						valueElem.getField().add(createValue("authorityID", "http://orcid.org/"+id));
+						valueElem.getField().add(createValue(val.getAuthority(), "http://orcid.org/"+id));
 					}
 					else if (authorityValue instanceof ProjectAuthorityValue){
 						String funderAuthorityId = ((ProjectAuthorityValue) authorityValue).getFunderAuthorityValue().getId();

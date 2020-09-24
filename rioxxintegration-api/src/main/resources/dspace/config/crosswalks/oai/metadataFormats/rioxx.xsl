@@ -156,6 +156,9 @@
 
 
             <xsl:for-each select="doc:metadata/doc:element[@name='dc']/doc:element[@name='contributor']/doc:element[@name='author']/doc:element/doc:field[@name='value']">
+                <xsl:variable name="authority">
+                    <xls:value-of select="following-sibling::*[@name='authority']"/>
+                </xsl:variable>
                 <rioxxterms:author>
                 <xsl:attribute name="first-named-author">
                     <xsl:choose>
@@ -166,11 +169,10 @@
                             <xsl:text>false</xsl:text>
                         </xsl:otherwise>
                     </xsl:choose>
-                </xsl:attribute>
-                    <xsl:if test="parent::doc:element/doc:field[@name='authorityID']">
+                </xsl:attribute>                	
+                    <xsl:if test="parent::doc:element/doc:field[@name=$authority]">
                         <xsl:attribute name="id" namespace="http://www.rioxx.net/schema/v2.0/rioxxterms/">
-                            <xsl:value-of select="parent::doc:element/doc:field[@name='authorityID']"/>
-
+                            <xsl:value-of select="parent::doc:element/doc:field[@name=$authority]"/>
                         </xsl:attribute>
                     </xsl:if>
                     <xls:value-of select="."/>
