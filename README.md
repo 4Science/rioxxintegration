@@ -346,7 +346,7 @@ A new simplified addon has been released by 4Science built as Maven Module. The 
 
 **__Important note__**: if you use DSpace 5.10 or DSpace 6.3 default versions you have to IMMEDIATELLY UPGRADE to the last line of development (5.11-SNAPSHOT or 6.4-SNAPSHOT). The activity is required because these versions may have some malfunctions due to dependencies (e.g. upgrade for Bower, JRuby, SASS dependency) or changed third party policies (e.g. GeoLite database feature for geolocation points). 
 * to upgrade your DSpace from 5.10 to 5.11-SNAPSHOT use https://github.com/4Science/rioxxintegration/releases/download/5.10.0/jisc-from-5_10-to-5_11-patch.diff
-* to upgrade your DSpace from 6.3 to 6.4-SNAPSHOT (commit 7e738a0bcc52461ee6e5f4758ebb3d5052bf1ebf) use https://github.com/4Science/rioxxintegration/releases/download/6.3.0/jisc-from-6_3-to-7e738a0bcc52461ee6e5f4758ebb3d5052bf1ebf-patch.diff 
+* to upgrade your DSpace from 6.3 to 6.4-SNAPSHOT (commit 7e738a0bcc52461ee6e5f4758ebb3d5052bf1ebf + fix for https://jira.lyrasis.org/browse/DS-4439) use https://github.com/4Science/rioxxintegration/releases/download/6.3.0/jisc-from-6_3-to-7e738a0bcc52461ee6e5f4758ebb3d5052bf1ebf-patch.diff 
 
 To be able to install the patch, you will need the following prerequisites:
 
