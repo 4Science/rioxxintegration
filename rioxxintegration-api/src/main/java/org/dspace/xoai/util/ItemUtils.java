@@ -231,7 +231,7 @@ public class ItemUtils
                     // Check if current bitstream is in original bundle + 1 of the 2 following
                     // Bitstream = primary bitstream in bundle -> true
                     // No primary bitstream found in bundle-> only the first one gets flagged as "primary"
-                    if ("ORIGINAL".equals(b.getName()) && (b.getPrimaryBitstream() != null && (b.getPrimaryBitstream().getID() == bit.getID() || bit.getID().equals(bits.get(0).getID()))))
+                    if ("ORIGINAL".equals(b.getName()) && ((b.getPrimaryBitstream() != null && b.getPrimaryBitstream().getID() == bit.getID()) || (b.getPrimaryBitstream() == null && bit.getID().equals(bits.get(0).getID()))))
                         primary = true;
                 	
                     Element bitstream = create("bitstream");
