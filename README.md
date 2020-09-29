@@ -1,7 +1,7 @@
 # DSpace Ref+Rioxx by 4Science
 This repository contains the integration addon for REF+RIOXX
 
-The original works is explained at https://github.com/atmire/RIOXX/blob/master/README.md
+The original work is explained at https://github.com/atmire/RIOXX/blob/master/README.md
 
 Note that the general concepts are the same, 4Science simplified the installation procedure, essentially read the [New patch installation](#Patch-installation-procedures) and [How to disable REF](#Compatibility-with-the-REF-patch)
 
@@ -45,7 +45,7 @@ Note that the general concepts are the same, 4Science simplified the installatio
 # Introduction <a name="Introduction"></a> 
 
 
-This documentation will help you deploy and configure the RIOXXv2 Application Profile for DSpace 5.10 and 6.3. The patch has been implemented in a generic way, using maven artifact. This means that changes to your existing DSpace installation could be override by this procedure.
+This documentation will help you deploy and configure the RIOXXv2 Application Profile for DSpace 5.10 and 6.3. The patch has been implemented in a generic way, using a maven artifact. This means that changes to your existing DSpace installation could be overridden by this procedure.
 
 ## Areas of DSpace affected by the RIOXX patch <a name="Areas-of-DSpace-affected"></a> 
 
@@ -58,25 +58,27 @@ It is important to realize that your existing item metadata and item display pag
 
 ## Areas of DSpace that have to be manually configured after applying the patch  <a name="Areas-of-DSpace-manually-configured"></a>
 
-**Submission forms**: the configuration file that defines your submission forms, input-forms.xml needs to be be extended with a number of new entry options.
+**Submission forms**: the configuration file that defines your submission forms, **input-forms.xml** needs to be be extended with a number of new entry options.
 
-Because the vast majority of institutions makes at least small tweaks to the submission forms, there is no opportunity to apply a patch to a standardized file. A template submission form file where the new REF and RIOXX fields are highlighted can be found on Github:
+Because the vast majority of institutions make at least small tweaks to the submission forms, there is no opportunity to apply a patch to a standardized file. A template submission form file where the new REF and RIOXX fields are highlighted can be found on Github:
 
-[https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/input-forms.xml](https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/input-forms.xml)
-[https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/item-submission.xml](https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/item-submission.xml)
-See rioxxterms.* fields + value pairs + dcterms.dateAccepted
+[https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/input-forms.xml](https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/input-forms.xml) 
+[https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/item-submission.xml](https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/item-submission.xml) 
 
-Please note that we provided also example for REF only or RIOXX only input forms and submission configuration: 
+See rioxxterms.* fields + value pairs + dcterms.dateAccepted 
+
+Please note that we have also provided examples for *REF only* or *RIOXX only* input forms and submission configuration: 
 [https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/input-forms-ref.xml](https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/input-forms-ref.xml)
-[https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/input-forms-rioxx.xml](https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/input-forms-ref.xml)
 [https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/item-submission-ref.xml](https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/item-submission-ref.xml)
+
+[https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/input-forms-rioxx.xml](https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/input-forms-rioxx.xml)
 [https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/item-submission-rioxx.xml](https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/item-submission-rioxx.xml)
 
 ## Compatibility with the REF patch  <a name="Compatibility-with-the-REF-patch"></a>
 
 The RIOXX patch contains also the REF patch. Both are installed at the same time. But you can choose to disable REF feature.
 
-To disable REF feature turn to false the follow configuration
+To disable the REF feature set the follow configuration to **false**:
 1. [https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/modules/rioxx.cfg#L9](https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/modules/rioxx.cfg#L9)
 2. [https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/modules/item-compliance.cfg#L32](https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/modules/item-compliance.cfg#L32)
 
@@ -88,7 +90,7 @@ Manually change this configuration:
 
 # Metadata mapping <a name="Metadata-mapping"></a>
 
-Before diving into the process of installing the RIOXX patch, it is crucial that you take note of the specific DSpace=>RIOXX metadata mapping that this patch implements. Your use of the different dc and dcterms fields in DSpace may be different than a standard installation, in which case you may need to do some additional activities before or after applying the patch.
+Before diving into the process of installing the RIOXX patch, it is crucial that you take note of the specific DSpace=>RIOXX metadata mapping that this patch implements. Your use of the different dc and dcterms fields in DSpace may be different from a standard installation, in which case you may need to do some additional activities before or after applying the patch.
 
 The following table lists the different metadata elements, according to the order specified in [http://rioxx.net/v2-0-final/](http://rioxx.net/v2-0-final/).  
 The DSpace metadata column indicates where the corresponding RIOXX elements are stored in the DSpace metadata.
@@ -342,15 +344,15 @@ curl -X POST -v -i <*your DSpace repository*>/edit/3 -H "In-Progress: false" -H 
 
 ## Prerequisites  <a name="Prerequisites"></a> 
 
-A new simplified addon has been released by 4Science built as Maven Module. The artifacts for DSpace 5.10 and DSpace 6.3 has been released as public on <a href="https://nexus.4science.it/">4Science Nexus repository</a>
+A new simplified addon has been released by 4Science built as a Maven Module. The artifacts for DSpace 5.10 and DSpace 6.3 have been released as public on <a href="https://nexus.4science.it/">4Science Nexus repository</a>
 
-**__Important note__**: if you use DSpace 5.10 or DSpace 6.3 default versions you have to IMMEDIATELLY UPGRADE to the last line of development (5.11-SNAPSHOT or 6.4-SNAPSHOT). The activity is required because these versions may have some malfunctions due to dependencies (e.g. upgrade for Bower, JRuby, SASS dependency) or changed third party policies (e.g. GeoLite database feature for geolocation points). 
+**__Important note__**: if you use DSpace 5.10 or DSpace 6.3 default versions you have to IMMEDIATELLY UPGRADE to the last line of development (5.11-SNAPSHOT or 6.4-SNAPSHOT). This is required because these versions may have some malfunctions due to dependencies (e.g. upgrade for Bower, JRuby, SASS dependency) or changed third party policies (e.g. GeoLite database feature for geolocation points). 
 * to upgrade your DSpace from 5.10 to 5.11-SNAPSHOT use https://github.com/4Science/rioxxintegration/releases/download/5.10.0/jisc-from-5_10-to-5_11-patch.diff
-* to upgrade your DSpace from 6.3 to 6.4-SNAPSHOT (current last commit 5c5e415276e11bfafaabb51819b38278862c2e91) https://github.com/4Science/rioxxintegration/releases/download/6.4.0-beta/jisc-from-6_3-to-5c5e415276e11bfafaabb51819b38278862c2e91-patch.diff
+* to upgrade your DSpace from 6.3 to 6.4-SNAPSHOT (current last commit 5c5e415276e11bfafaabb51819b38278862c2e91) use https://github.com/4Science/rioxxintegration/releases/download/6.4.0-beta/jisc-from-6_3-to-5c5e415276e11bfafaabb51819b38278862c2e91-patch.diff
 
 To be able to install the patch, you will need the following prerequisites:
 
-* A running DSpace 5.10 or 6.3 instance. 
+* A running DSpace 5.10 or 6.3 instance
 * Git should be installed on the machine to apply the prerequisite patch.
 
 ## RIOXX Integration addon <a name="rioxx-integration-addon"></a>
@@ -363,23 +365,23 @@ After upgrading your DSpace at 5.11-SNAPSHOT or 6.4-SNAPSHOT (currently the rele
 
 ### 1. Run the pre-requisite Git command. <a name="run-git-command"></a>
 
-Run the following command where <patch file> needs to be replaced with the name of the patch:
+Run the following command where `<patch file>` needs to be replaced with the name of the patch:
 
 ``` 
 git apply --check <patch file>
 ```
 
-This command will return whether it is possible to apply the patch to your installation. This should pose no problems in case the DSpace is not customized or in case not many customizations are present.   
-In case, the check is successful, the patch can be installed without any problems. Otherwise, you will have to merge some changes manually.
+This command will return whether it is possible to apply the patch to your installation. This should pose no problems where DSpace is not customized or where not many customizations are present. 
 
+If the check is successful, the patch can be installed without any problems. Otherwise, you will have to merge some changes manually.
 
-To apply the patch, the following command should be run where <patch file> is replaced with the name of the patch file. 
+To apply the patch, the following command should be run where `<patch file>` is replaced with the name of the patch file. 
 
 ``` 
 git apply --whitespace=nowarn --reject <patch file>
 ```
 
-This command will tell git to apply the patch and ignore unharmful whitespace issues. The `--reject` flag instructs the command to continue when conflicts are encountered and saves the corresponding code hunks to a `.rej` file so you can review and apply them manually later on. Before continuing to the next step, you have to resolve all merge conflicts indicated by the `.rej` files. After solving the merge conflicts, remove all the `.rej` files.
+This command will tell git to apply the patch and ignore unharmful whitespace issues. The `--reject` flag instructs the command to continue when conflicts are encountered and saves the problematic code chunks to a `.rej` file so you can review and apply them manually later on. Before continuing to the next step, you have to resolve all merge conflicts indicated by the `.rej` files. After solving the merge conflicts, remove all the `.rej` files.
 
 
 For example to install the 5.x RIOXX Integration plugin on top of a 5.10 DSpace version you have:
@@ -432,6 +434,7 @@ This will Populate the RIOXX OAI endpoint that will be available on
 ```
 
 If you want to avoid multiple manual executions of this script during testing, you can always add it to your scheduled tasks (crontab), and have it execute every hour or every 15 minutes.  
+
 Do note that the more items your repository contains, the more resource intensive this task is. Be careful scheduling this task frequently on production systems! On production systems we still highly recommend a daily frequency.
 
 
