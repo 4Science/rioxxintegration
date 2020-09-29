@@ -192,11 +192,13 @@ public class ItemUtils
 				if (authorityValue!=null) {
 					if (authorityValue instanceof FunderAuthorityValue) {
 						String id = ((FunderAuthorityValue) authorityValue).getFunderID();
-						valueElem.getField().add(createValue("authorityID", "http://dx.doi.org/" + id));
+						valueElem.getField().add(createValue("authorityID", "http://dx.doi.org/" + id));						
+						valueElem.getField().add(createValue(val.getAuthority(), "http://dx.doi.org/" + id));						
 
 					} else if (authorityValue instanceof Orcidv2AuthorityValue) {
 						String id = ((Orcidv2AuthorityValue) authorityValue).getOrcid_id();
 						valueElem.getField().add(createValue("authorityID", "http://orcid.org/"+id));
+						valueElem.getField().add(createValue(val.getAuthority(), "http://orcid.org/"+id));
 					}
 					else if (authorityValue instanceof ProjectAuthorityValue){
 						String funderAuthorityId = ((ProjectAuthorityValue) authorityValue).getFunderAuthorityValue().getId();
@@ -229,7 +231,7 @@ public class ItemUtils
                     // Check if current bitstream is in original bundle + 1 of the 2 following
                     // Bitstream = primary bitstream in bundle -> true
                     // No primary bitstream found in bundle-> only the first one gets flagged as "primary"
-                    if ("ORIGINAL".equals(b.getName()) && (b.getPrimaryBitstream() != null && (b.getPrimaryBitstream().getID() == bit.getID() || bit.getID().equals(bits.get(0).getID()))))
+                    if ("ORIGINAL".equals(b.getName()) && ((b.getPrimaryBitstream() != null && b.getPrimaryBitstream().getID() == bit.getID()) || (b.getPrimaryBitstream() == null && bit.getID().equals(bits.get(0).getID()))))
                         primary = true;
                 	
                     Element bitstream = create("bitstream");
@@ -290,7 +292,7 @@ public class ItemUtils
                             createValue("format", bit.getFormat(context)
                                     .getMIMEType()));
                     bitstream.getField().add(
-                            createValue("size", "" + bit.getSize()));
+                            createValue("size", "" + bit.getSizeBytes()));
                     bitstream.getField().add(createValue("url", url));
                     bitstream.getField().add(
                             createValue("checksum", cks));

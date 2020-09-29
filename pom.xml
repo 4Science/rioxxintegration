@@ -3,7 +3,7 @@
 
 	<groupId>it.4science.dspace</groupId>
 	<artifactId>rioxxintegration</artifactId>
-	<version>6.3.0</version>
+	<version>6.4.0-SNAPSHOT</version>
 	<organization>
 		<url>http://www.4science.it/en/</url>
 		<name>4Science</name>
@@ -20,7 +20,7 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<dspace.version>6.3</dspace.version>
+		<dspace.version>6.4-SNAPSHOT</dspace.version>
 		<!-- 'root.basedir' is the path to the root [src] dir. It must be redefined 
 			by each child POM, as it is used to reference the LICENSE_HEADER and *.properties 
 			file(s) in that directory. -->

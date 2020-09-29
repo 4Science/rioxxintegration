@@ -25,6 +25,7 @@ import org.dspace.core.Context;
 import org.dspace.event.Consumer;
 import org.dspace.event.Event;
 import org.dspace.ref.compliance.rules.complianceupdaters.ComplianceDepositCheck;
+import org.dspace.services.factory.DSpaceServicesFactory;
 import org.dspace.utils.DSpace;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -49,22 +50,25 @@ public class FirstComplianceDepositConsumer implements Consumer {
 
     @Override
     public void consume(Context context, Event event) throws Exception {
-        int subjectType = event.getSubjectType();
-        int eventType = event.getEventType();
-
-        DSpaceObject dso = event.getSubject(context);
-
-        switch (subjectType) {
-            case Constants.ITEM:
-                Item item = (Item) dso;
-                //If we are updating the metadata and [ the item is archived or the submitter completed his submission ]
-                if (eventType == Event.MODIFY_METADATA  && !item.isWithdrawn() && (item.isArchived() || workspaceItemService.findByItem(context, item)==null )) {
-                    itemIDs.add(dso.getID());
-                }
-                break;
-            default:
-                log.debug("consume() got unrecognized event: " + event.toString());
-        }
+    	boolean refEnabled = DSpaceServicesFactory.getInstance().getConfigurationService().getBooleanProperty("rioxx.ref.enabled", true);
+    	if(refEnabled) {
+	        int subjectType = event.getSubjectType();
+	        int eventType = event.getEventType();
+	
+	        DSpaceObject dso = event.getSubject(context);
+	
+	        switch (subjectType) {
+	            case Constants.ITEM:
+	                Item item = (Item) dso;
+	                //If we are updating the metadata and [ the item is archived or the submitter completed his submission ]
+	                if (eventType == Event.MODIFY_METADATA  && !item.isWithdrawn() && (item.isArchived() || workspaceItemService.findByItem(context, item)==null )) {
+	                    itemIDs.add(dso.getID());
+	                }
+	                break;
+	            default:
+	                log.debug("consume() got unrecognized event: " + event.toString());
+	        }
+    	}
     }
 
     /**
