@@ -7,8 +7,6 @@
  */
 package org.dspace.ref.compliance.rules;
 
-import java.sql.SQLException;
-
 import org.dspace.content.Item;
 import org.dspace.core.Context;
 import org.dspace.discovery.DiscoverQuery;
@@ -44,21 +42,16 @@ public class DiscoverableRule extends AbstractComplianceRule {
         query.setStart(0);
 
         try {
-            Context anonymousContext = new Context();
+        	Context anonymousContext = new Context();
             DiscoverResult result = searchService.search(anonymousContext, query);
             if(result != null && result.getTotalSearchResults() > 0) {
                 valid = true;
             } else {
                 addViolationDescription(item);
-            }
-
-            anonymousContext.complete();
-
+            }            
         } catch (SearchServiceException e) {
             addViolationDescription("unable to query discovery for item %s: %s", item.getHandle(), e.getMessage());
-        } catch (SQLException e) {
-            addViolationDescription("unable to create an anonymous context for querying discovery for item %s: %s", item.getHandle(), e.getMessage());
-        }
+        } 
 
         return valid;
     }
