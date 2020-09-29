@@ -83,7 +83,7 @@ To disable REF feature turn to false the follow configuration
 Manually change this configuration:
 1. From [https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/input-forms.xml](https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/input-forms.xml) remove the metadata: refterms.panel and refterms.dateFirstOnline
 2. From [https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/item-submission.xml](https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/item-submission.xml) remove the step: REFExceptionStep and REFComplianceStep
-3. If you enabled the XML Workflow please remove https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/workflow.xml#L38 and https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/workflow.xml#L54
+3. If you enabled the XML Workflow please remove https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/workflow.xml#L38 and https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/workflow.xml#L56
 
 
 # Metadata mapping <a name="Metadata-mapping"></a>

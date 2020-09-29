@@ -32,7 +32,7 @@
                 <action id="reviewaction"/>
             </actions>
         </step>
-        <!-- Please comment in this step if REF is not enabled -->
+        <!-- Please comment out this step if REF is disabled -->
         <step id="editstep" role="editor" userSelectionMethod="claimaction">
             <outcomes>
                 <step status="0">refcompliancestep</step>
@@ -42,15 +42,17 @@
             </actions>
         </step>
         <!-- Please comment out this step if REF is enabled -->
-<!--         <step id="editstep" role="editor" userSelectionMethod="claimaction">
+<!-- REF-enabled      
+        <step id="editstep" role="editor" userSelectionMethod="claimaction">
             <outcomes>
                 <step status="0">finaleditstep</step>
             </outcomes>
             <actions>
                 <action id="editaction"/>
             </actions>
-        </step> -->
-        <!-- Please comment in this step if REF is not enabled -->        
+        </step>
+-->
+        <!-- Please comment out this step if REF is disabled -->        
         <step id="refcompliancestep" role="finaleditor" userSelectionMethod="claimaction">
             <outcomes>
                 <step status="0">finaleditstep</step>
