@@ -7,6 +7,7 @@
  */
 package org.dspace.ref.compliance.service;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -16,6 +17,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
+import org.dspace.authorize.AuthorizeException;
 import org.dspace.content.DCDate;
 import org.dspace.content.Item;
 import org.dspace.content.MetadataValue;
@@ -76,13 +78,18 @@ public class ComplianceCheckServiceBean implements ComplianceCheckService {
                 }
 
             } catch(Exception ex) {
-                context.abort();
                 log.warn(ex.getMessage(), ex);
-            } finally {
-                // Always remove the temporary values
-                removeFakeValues(context, fakeFields, item);
+            } 
+            
+            // Always remove the temporary values
+            removeFakeValues(context, fakeFields, item);
+            
+            try {
+				getItemService().update(context, item);
+            } catch(Exception ex) {
+                log.warn(ex.getMessage(), ex);
             }
-
+            
             return complianceResult;
         }
     }
@@ -105,12 +112,11 @@ public class ComplianceCheckServiceBean implements ComplianceCheckService {
     }
 
     private void removeFakeValues(Context context, List<Metadata> fakeFields, Item item) {
-        if(CollectionUtils.isNotEmpty(fakeFields) && context.isValid()) {
+        if(CollectionUtils.isNotEmpty(fakeFields)) {
             try {
             	for (Metadata fakeField : fakeFields) {
                     getItemService().clearMetadata(context, item, fakeField.schema, fakeField.element, fakeField.qualifier, fakeField.language);
                 }
-                getItemService().update(context, item);
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
             }
@@ -150,7 +156,6 @@ public class ComplianceCheckServiceBean implements ComplianceCheckService {
         try {
             String estimatedValue = estimateValue(context, item, value);
             getItemService().addMetadata(context, item, field.schema, field.element, field.qualifier, field.language, estimatedValue);
-            getItemService().update(context, item);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         }
