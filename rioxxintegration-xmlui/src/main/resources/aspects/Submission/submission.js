@@ -333,6 +333,9 @@ function submissionControl(collectionHandle, workspaceID, initStepAndPage)
         // Only step forward to next page if no errors on this page
         if ((cocoon.request.get(AbstractProcessingStep.NEXT_BUTTON) || !stepHasUI(stepConfig))  && (response_flag==AbstractProcessingStep.STATUS_COMPLETE))
         {
+            submissionInfo = getSubmissionInfo(workspaceID);
+            stepsInSubmission = getSubmissionSteps(submissionInfo);
+
            	state.progressIterator++;
 
             // update the totalSteps because this value might change due to the selected item type in the first describe step
