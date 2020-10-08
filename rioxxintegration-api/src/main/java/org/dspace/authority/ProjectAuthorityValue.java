@@ -7,17 +7,17 @@
  */
 package org.dspace.authority;
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Map;
+import java.util.UUID;
+
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrInputDocument;
 import org.dspace.core.Context;
-
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Map;
-import java.util.UUID;
 
 /**
  * Created by Philip Vissenaekens (philip at atmire dot com)
@@ -131,5 +131,12 @@ public class ProjectAuthorityValue extends AuthorityValue {
     @Override
     public int hashCode() {
         return getValue() != null ? getValue().hashCode() : 0;
+    }
+    
+    @Override
+    public AuthorityValue newInstance(String info) {
+    	ProjectAuthorityValue authorityValue = new ProjectAuthorityValue();
+        authorityValue.setValue(info);
+        return authorityValue;
     }
 }
