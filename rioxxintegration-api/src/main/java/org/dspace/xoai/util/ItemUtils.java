@@ -80,70 +80,71 @@ public class ItemUtils {
 		// read all metadata into Metadata Object
 		metadata = new Metadata();
 		Metadatum[] vals = item.getMetadata(Item.ANY, Item.ANY, Item.ANY, Item.ANY);
-		for (Metadatum val : vals) {
-			Element valueElem = null;
-			Element schema = getElement(metadata.getElement(), val.schema);
-			if (schema == null) {
-				schema = create(val.schema);
-				metadata.getElement().add(schema);
-			}
-			valueElem = schema;
-
-			// Has element.. with XOAI one could have only schema and value
-			if (val.element != null && !val.element.equals("")) {
-				Element element = getElement(schema.getElement(),
-						val.element);
-				if (element == null) {
-					element = create(val.element);
-					schema.getElement().add(element);
+		
+		Context context = null;
+		try {
+			context = new Context();
+			
+			for (Metadatum val : vals) {
+				Element valueElem = null;
+				Element schema = getElement(metadata.getElement(), val.schema);
+				if (schema == null) {
+					schema = create(val.schema);
+					metadata.getElement().add(schema);
 				}
-				valueElem = element;
-
-				// Qualified element?
-				if (val.qualifier != null && !val.qualifier.equals("")) {
-					Element qualifier = getElement(element.getElement(),
-							val.qualifier);
-					if (qualifier == null) {
-						qualifier = create(val.qualifier);
-						element.getElement().add(qualifier);
+				valueElem = schema;
+	
+				// Has element.. with XOAI one could have only schema and value
+				if (val.element != null && !val.element.equals("")) {
+					Element element = getElement(schema.getElement(),
+							val.element);
+					if (element == null) {
+						element = create(val.element);
+						schema.getElement().add(element);
 					}
-					valueElem = qualifier;
+					valueElem = element;
+	
+					// Qualified element?
+					if (val.qualifier != null && !val.qualifier.equals("")) {
+						Element qualifier = getElement(element.getElement(),
+								val.qualifier);
+						if (qualifier == null) {
+							qualifier = create(val.qualifier);
+							element.getElement().add(qualifier);
+						}
+						valueElem = qualifier;
+					}
+	
 				}
-
-			}
-
-			// Language?
-			if (val.language != null && !val.language.equals("")) {
-				Element language = getElement(valueElem.getElement(),
-						val.language);
-				if (language == null) {
-					language = create(val.language);
-					valueElem.getElement().add(language);
+	
+				// Language?
+				if (val.language != null && !val.language.equals("")) {
+					Element language = getElement(valueElem.getElement(),
+							val.language);
+					if (language == null) {
+						language = create(val.language);
+						valueElem.getElement().add(language);
+					}
+					valueElem = language;
+				} else {
+					Element language = getElement(valueElem.getElement(),
+							"none");
+					if (language == null) {
+						language = create("none");
+						valueElem.getElement().add(language);
+					}
+					valueElem = language;
 				}
-				valueElem = language;
-			} else {
-				Element language = getElement(valueElem.getElement(),
-						"none");
-				if (language == null) {
-					language = create("none");
-					valueElem.getElement().add(language);
+	
+				valueElem.getField().add(createValue("value", val.value));
+				if (val.authority != null) {
+					valueElem.getField().add(createValue("authority", val.authority));
+					if (val.confidence != Choices.CF_NOVALUE)
+						valueElem.getField().add(createValue("confidence", val.confidence + ""));
 				}
-				valueElem = language;
-			}
-
-			valueElem.getField().add(createValue("value", val.value));
-			if (val.authority != null) {
-				valueElem.getField().add(createValue("authority", val.authority));
-				if (val.confidence != Choices.CF_NOVALUE)
-					valueElem.getField().add(createValue("confidence", val.confidence + ""));
-			}
-			AuthorityValueFinder authorityValueFinder = new AuthorityValueFinder();
-			try {
-				Context context = new Context();
-
-
+				AuthorityValueFinder authorityValueFinder = new AuthorityValueFinder();
 				AuthorityValue authorityValue = authorityValueFinder.findByUID(context, val.authority);
-				context.abort();
+				
 				if (authorityValue!=null) {
 					if (authorityValue instanceof FunderAuthorityValue) {
 						String id = ((FunderAuthorityValue) authorityValue).getFunderID();
@@ -156,16 +157,22 @@ public class ItemUtils {
 						valueElem.getField().add(createValue(val.authority, "http://orcid.org/"+id));
 					}
 					else if (authorityValue instanceof ProjectAuthorityValue){
-						String funderAuthorityId = ((ProjectAuthorityValue) authorityValue).getFunderAuthorityValue().getId();
-						valueElem.getField().add(createValue("funderAuthorityID", funderAuthorityId));
+						FunderAuthorityValue funderAuthorityValue = ((ProjectAuthorityValue) authorityValue).getFunderAuthorityValue();
+						if(funderAuthorityValue!=null) {
+							String funderAuthorityId = funderAuthorityValue.getId();
+							valueElem.getField().add(createValue("funderAuthorityID", funderAuthorityId));
+						}
 					}
 				}
-
-			} catch (SQLException e) {
-				e.printStackTrace();
 			}
 
-
+		} catch (Exception e) {
+			log.warn(e.getMessage());
+		}
+		finally {
+			if(context!=null && context.isValid()) {
+				context.abort();
+			}
 		}
 		// Done! Metadata has been read!
 		// Now adding bitstream info
