@@ -201,8 +201,11 @@ public class ItemUtils
 						valueElem.getField().add(createValue(val.getAuthority(), "http://orcid.org/"+id));
 					}
 					else if (authorityValue instanceof ProjectAuthorityValue){
-						String funderAuthorityId = ((ProjectAuthorityValue) authorityValue).getFunderAuthorityValue().getId();
-						valueElem.getField().add(createValue("funderAuthorityID", funderAuthorityId));
+						FunderAuthorityValue funderAuthorityValue = ((ProjectAuthorityValue) authorityValue).getFunderAuthorityValue();
+						if(funderAuthorityValue!=null) {
+							String funderAuthorityId = funderAuthorityValue.getId();
+							valueElem.getField().add(createValue("funderAuthorityID", funderAuthorityId));
+						}
 					}
 				}
         }
