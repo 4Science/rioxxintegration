@@ -15,6 +15,7 @@
 	  
    <dependencies>
 
+
       <!-- DSpace Custom SWORDv2 Web application -->
       <dependency>
         <groupId>org.dspace</groupId>
@@ -30,5 +31,10 @@
         <classifier>classes</classifier>
       </dependency>
 
+		<dependency>
+			<groupId>it.4science.dspace</groupId>
+			<artifactId>rioxxintegration-api</artifactId>
+		</dependency>
+		
    </dependencies>
 </project>
