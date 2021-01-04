@@ -14,6 +14,7 @@ import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -47,9 +48,13 @@ import com.lyncode.xoai.util.Base64Utils;
  */
 @SuppressWarnings("deprecation")
 public class ItemUtils {
-	private static Logger log = LogManager
-			.getLogger(ItemUtils.class);
+	
+	private static Logger log = LogManager.getLogger(ItemUtils.class);
 
+	private static final String REGEX_SELECT_PRIMARY = ConfigurationManager.getProperty("oai", "retrievemetadata.primarybistream.pattern");
+	
+	private static final Pattern PATTERN_SELECT_PRIMARY = Pattern.compile(REGEX_SELECT_PRIMARY);
+	
 	private static Element getElement(List<Element> list, String name) {
 		for (Element e : list)
 			if (name.equals(e.getName()))
@@ -192,15 +197,36 @@ public class ItemUtils {
 				bundle.getElement().add(bitstreams);
 				Bitstream[] bits = b.getBitstreams();
 
-
-
+				int primary=-1;
 				for (Bitstream bts : bits) {
-					boolean primary=false;
                     // Check if current bitstream is in original bundle + 1 of the 2 following
                     // Bitstream = primary bitstream in bundle -> true
+                    if (b.getName().equals("ORIGINAL") && (b.getPrimaryBitstreamID() == bts.getID())) {
+                        primary = bts.getID();
+                    }
+                    
+                    // No primary bitstream found in bundle-> check the regex 
+                    if(primary==-1) {
+                    	if (b.getName().equals("ORIGINAL") && b.getPrimaryBitstreamID() == -1 && PATTERN_SELECT_PRIMARY.matcher(bts.getName()).matches()) {
+                    		primary = bts.getID();
+                    	}
+                    }
+
+                    if(primary!=-1) {
+                    	break;
+                    }
+				}
+				
+
+				for (Bitstream bts : bits) {
+                    
                     // No primary bitstream found in bundle-> only the first one gets flagged as "primary"
-                    if (b.getName().equals("ORIGINAL") && (b.getPrimaryBitstreamID() == bts.getID() || b.getPrimaryBitstreamID() == -1 && bts.getID() == bits[0].getID()))
-                        primary = true;
+                    if(primary==-1) {
+                    	if (b.getName().equals("ORIGINAL") && b.getPrimaryBitstreamID() == -1 && bts.getID() == bits[0].getID()) {
+                    		primary = bts.getID();
+                    	}
+                    }
+                    
 					Bitstream  bit=bts;
 
 					if (bit != null) {
@@ -266,7 +292,7 @@ public class ItemUtils {
 								createValue("sid", bit.getSequenceID()
 										+ ""));
 						bitstream.getField().add(
-								createValue("primary", primary
+								createValue("primary", (primary==bit.getID()?true:false)
 										+ ""));
 					}
 				}
@@ -274,7 +300,7 @@ public class ItemUtils {
 
 			}
 		} catch (SQLException e1) {
-			e1.printStackTrace();
+			log.error(e1.getMessage(), e1);
 		}
 
 
