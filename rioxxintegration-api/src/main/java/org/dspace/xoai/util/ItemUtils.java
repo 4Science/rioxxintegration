@@ -14,6 +14,8 @@ import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
+import java.util.regex.Pattern;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -46,7 +48,6 @@ import org.dspace.eperson.Group;
 import org.dspace.eperson.factory.EPersonServiceFactory;
 import org.dspace.eperson.service.GroupService;
 import org.dspace.xoai.data.DSpaceItem;
-import org.dspace.xoai.util.URLUtils;
 
 import com.lyncode.xoai.dataprovider.xml.xoai.Element;
 import com.lyncode.xoai.dataprovider.xml.xoai.Metadata;
@@ -60,6 +61,10 @@ import com.lyncode.xoai.util.Base64Utils;
 public class ItemUtils
 {
     private static final Logger log = LogManager.getLogger(ItemUtils.class);
+    
+	private static final String REGEX_SELECT_PRIMARY = ConfigurationManager.getProperty("oai", "retrievemetadata.primarybistream.pattern");
+	
+	private static final Pattern PATTERN_SELECT_PRIMARY = Pattern.compile(REGEX_SELECT_PRIMARY);
     
     private static final MetadataExposureService metadataExposureService
             = UtilServiceFactory.getInstance().getMetadataExposureService();
@@ -228,15 +233,36 @@ public class ItemUtils
                 Element bitstreams = create("bitstreams");
                 bundle.getElement().add(bitstreams);
                 List<Bitstream> bits = b.getBitstreams();
+                
+                UUID primary = null;
                 for (Bitstream bit : bits)
                 {
-					boolean primary=false;
                     // Check if current bitstream is in original bundle + 1 of the 2 following
                     // Bitstream = primary bitstream in bundle -> true
-                    // No primary bitstream found in bundle-> only the first one gets flagged as "primary"
-                    if ("ORIGINAL".equals(b.getName()) && ((b.getPrimaryBitstream() != null && b.getPrimaryBitstream().getID() == bit.getID()) || (b.getPrimaryBitstream() == null && bit.getID().equals(bits.get(0).getID()))))
-                        primary = true;
-                	
+                    if ("ORIGINAL".equals(b.getName()) && (b.getPrimaryBitstream() != null && b.getPrimaryBitstream().getID().equals(bit.getID()))) {
+                        primary = bit.getID();
+                    }
+                    
+                    // No primary bitstream found in bundle-> check the regex 
+                    if(primary==null) {
+                    	if ("ORIGINAL".equals(b.getName()) && b.getPrimaryBitstream() == null && PATTERN_SELECT_PRIMARY.matcher(bit.getName()).matches()) {
+                    		primary = bit.getID();
+                    	}
+                    }
+
+                    if(primary!=null) {
+                    	break;
+                    }
+                }
+                for (Bitstream bit : bits)
+                {
+                    // No primary bitstream found in bundle-> only the first one gets flagged as "primary"                	
+                	if(primary==null) {
+                		if ("ORIGINAL".equals(b.getName()) && (b.getPrimaryBitstream() == null && bit.getID().equals(bits.get(0).getID()))) {
+                			primary = bit.getID();
+                		}
+                	}
+                    
                     Element bitstream = create("bitstream");
                     bitstreams.getElement().add(bitstream);
                     String url = "";
@@ -305,7 +331,7 @@ public class ItemUtils
                             createValue("sid", bit.getSequenceID()
                                     + ""));
 						bitstream.getField().add(
-								createValue("primary", primary
+								createValue("primary", ((primary!=null && primary.equals(bit.getID()))?true:false)
 										+ ""));
                 }
             }
