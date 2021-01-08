@@ -49,6 +49,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 public class RIOXXConsumer implements Consumer {
 
+	public static final String CORRESPONDINGAUTHOR = "::correspondingauthor";
+	
     private Set<UUID> itemIds = new HashSet<>();
     private ProjectService projectService = new DSpace().getServiceManager()
             .getServiceByName("ProjectService", ProjectService.class);
@@ -158,13 +160,16 @@ public class RIOXXConsumer implements Consumer {
 						String element = metadataToRefreshItem.getElement();
 						String qualifier = metadataToRefreshItem.getQualifier();
 						List<MetadataValue> list = itemService.getMetadata(item, schema, element, qualifier, Item.ANY);
-						itemService.clearMetadata(ctx, item, schema, element, qualifier, Item.ANY);
-	                	for (MetadataValue m : list) {
-	                		boolean handled = handleAuthorityControlledMetadatum(ctx, item, m);
-	                		if(!handled) {
-	                			itemService.addMetadata(ctx, item, schema, element, qualifier, m.getLanguage(), m.getValue(), m.getAuthority(), m.getConfidence());
-	                		}
-	                	}
+						if(!StringUtils.equals(metadataToRefreshItem.toString('.'),"rioxxterms.contributor.correspondingauthor") && !StringUtils.equals(metadataToRefreshItem.toString('.'),"rioxxterms.contributor.otherauthor")) {
+							itemService.clearMetadata(ctx, item, schema, element, qualifier, Item.ANY);
+
+		                	for (MetadataValue m : list) {
+		                		boolean handled = handleAuthorityControlledMetadatum(ctx, item, m);
+		                		if(!handled) {
+		                			itemService.addMetadata(ctx, item, schema, element, qualifier, m.getLanguage(), m.getValue(), m.getAuthority(), m.getConfidence());
+		                		}
+		                	}
+						}
 	                }
 	                itemService.update(ctx, item);
 	            }
@@ -175,9 +180,19 @@ public class RIOXXConsumer implements Consumer {
     }
 
     private boolean handleAuthorityControlledMetadatum(Context ctx, Item item, MetadataValue m) throws SQLException, AuthorizeException {
-        String[] split = m.getValue().split("::");
+        
+    	String metadataValue = m.getValue();
+    	
+    	boolean correspondingAuthor = false;
+    	if (StringUtils.endsWithIgnoreCase(metadataValue, CORRESPONDINGAUTHOR)) {
+        	correspondingAuthor = true;
+        	metadataValue = StringUtils.removeEndIgnoreCase(metadataValue, CORRESPONDINGAUTHOR);
+        }
+    	
+    	String[] split = m.getValue().split("::");
         String email = "";
         String name = "";
+        
 
         String orcidValue = split[0];
 
@@ -188,6 +203,7 @@ public class RIOXXConsumer implements Consumer {
             email = split[2];
         }
 
+        
         int beginIndex = orcidValue.lastIndexOf("/");
 
         //Handling the string alterations in case it's appended with an orcid url. These rules are in place to guard
@@ -201,28 +217,28 @@ public class RIOXXConsumer implements Consumer {
         String orcidID = orcidValue.substring(beginIndex);
         if(StringUtils.isNotBlank(orcidID) && StringUtils.isNotBlank(name)) {
             if (orcidID.matches(ORCID_ID_SYNTAX)) {
-                handleOrcidMetadatum(ctx, item, m, orcidID, name, email);
+                handleOrcidMetadatum(ctx, item, m, orcidID, name, email, correspondingAuthor);
                 return true;
             } else {
                 PersonAuthorityValue personAuthorityValue = handlePersonAuthority(ctx, m, name, email);
-                replaceMetadatumWithAuthority(ctx, item, m, name, personAuthorityValue.getId());
+                replaceMetadatumWithAuthority(ctx, item, m, name, personAuthorityValue.getId(), correspondingAuthor);
                 return true;
             }
         }
         return false;
     }
 
-    private void handleOrcidMetadatum(Context ctx, Item item, MetadataValue m, String orcidID, String name, String email) throws SQLException, AuthorizeException {
+    private void handleOrcidMetadatum(Context ctx, Item item, MetadataValue m, String orcidID, String name, String email, boolean correspondingAuthor) throws SQLException, AuthorizeException {
         Orcidv2AuthorityValue authorityValue = (Orcidv2AuthorityValue) authorityValueService.findByOrcidID(ctx, orcidID);
         if (authorityValue != null) {
             if (StringUtils.isNotBlank(email) && !authorityValue.getEmails().contains(email)) {
                 authorityValue.addEmail(email);
                 indexAuthority(authorityValue);
             }
-            replaceMetadatumWithAuthority(ctx, item, m, name, authorityValue.getId());
+            replaceMetadatumWithAuthority(ctx, item, m, name, authorityValue.getId(), correspondingAuthor);
         } else {
             Orcidv2AuthorityValue orcidAuthorityValue = handleOrcidAuthority(m, orcidID, name, email);
-            replaceMetadatumWithAuthority(ctx, item, m, name, orcidAuthorityValue.getId());
+            replaceMetadatumWithAuthority(ctx, item, m, name, orcidAuthorityValue.getId(), correspondingAuthor);
         }
     }
 
@@ -300,7 +316,7 @@ public class RIOXXConsumer implements Consumer {
         indexingService.commit();
     }
 
-    private void replaceMetadatumWithAuthority(Context context, Item item, MetadataValue m, String name, String id) throws SQLException, AuthorizeException {
+    private void replaceMetadatumWithAuthority(Context context, Item item, MetadataValue m, String name, String id, boolean correspondingAuthor) throws SQLException, AuthorizeException {
     	
     	String schema = m.getMetadataField().getMetadataSchema().getName();
     	String element = m.getMetadataField().getElement();
@@ -308,6 +324,16 @@ public class RIOXXConsumer implements Consumer {
     	String language = m.getLanguage();
     	
         itemService.addMetadata(context, item, schema, element, qualifier, language, name, id, Choices.CF_ACCEPTED);
+
+        //try to manage corresponding author
+        if(StringUtils.equals(m.getMetadataField().toString('.'),"dc.contributor.author")) {
+	        if(correspondingAuthor) {
+	        	itemService.addMetadata(context, item, "rioxxterms", "contributor", "correspondingauthor", language, name, id, Choices.CF_ACCEPTED);
+	        }
+	        else {
+	        	itemService.addMetadata(context, item, "rioxxterms", "contributor", "otherauthor", language, name, id, Choices.CF_ACCEPTED);
+	        }
+        }
     }
 
     public void finish(Context ctx) throws Exception {

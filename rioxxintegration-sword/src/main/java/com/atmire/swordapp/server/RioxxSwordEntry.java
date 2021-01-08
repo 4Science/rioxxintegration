@@ -16,12 +16,14 @@ import java.util.Map;
 import org.apache.abdera.model.Element;
 import org.apache.abdera.model.Entry;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.dspace.content.authority.factory.ContentAuthorityServiceFactory;
 import org.dspace.content.authority.service.MetadataAuthorityService;
 import org.dspace.services.ConfigurationService;
 import org.dspace.services.factory.DSpaceServicesFactory;
 import org.swordapp.server.SwordEntry;
 
+import com.atmire.pure.consumer.RIOXXConsumer;
 import com.atmire.swordapp.server.util.SimpleRioxxMetadataHelper;
 
 public class RioxxSwordEntry extends SwordEntry {
@@ -88,6 +90,16 @@ public class RioxxSwordEntry extends SwordEntry {
                     value += "::" + email;
                 }
             }
+        }
+        //only to check extra attribute to find corresponding author on pubr.author
+        if(StringUtils.equals(field, "pubr.author")) {
+        	String correspondingAuthor = element.getAttributeValue("corresp");
+        	if(StringUtils.isNotBlank(correspondingAuthor)) {
+        		Boolean correspondingAuthorBoolean = BooleanUtils.toBoolean(correspondingAuthor);
+        		if(correspondingAuthorBoolean) {
+        			value += RIOXXConsumer.CORRESPONDINGAUTHOR;
+        		}
+        	}
         }
         return value;
     }
