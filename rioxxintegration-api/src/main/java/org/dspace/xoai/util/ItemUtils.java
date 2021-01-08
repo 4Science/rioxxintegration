@@ -234,6 +234,7 @@ public class ItemUtils
                 bundle.getElement().add(bitstreams);
                 List<Bitstream> bits = b.getBitstreams();
                 
+                // primary, if set, will store the ID of the primary bitstream in the Original bundle
                 UUID primary = null;
                 // If this is original bundle, then need to select primary bitstream, which 
                 // will be one which was manually selected, or the first whose filename matches 
