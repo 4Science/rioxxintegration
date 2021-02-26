@@ -1451,6 +1451,10 @@ function doEditItem(itemID)
 		{
 			doEditItemMetadata(itemID, null);
 		}
+		else if (cocoon.request.get("submit_funding"))
+		{
+			doEditItemFunding(itemID);
+		}	    
 		else if (cocoon.request.get("view_item"))
 		{
 			doViewItem(itemID);
