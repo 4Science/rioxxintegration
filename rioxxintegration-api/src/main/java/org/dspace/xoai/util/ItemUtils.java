@@ -256,7 +256,7 @@ public class ItemUtils
                     }
                     // Fall-back is the first bitstream listed 
                     if (primary == null && bits.size() > 0) {
-                        primary = bits.get(0).getID()
+                        primary = bits.get(0).getID();
                     }
                 }
 
