@@ -62,9 +62,9 @@ public class ItemUtils
 {
     private static final Logger log = LogManager.getLogger(ItemUtils.class);
     
-	private static final String REGEX_SELECT_PRIMARY = ConfigurationManager.getProperty("oai", "retrievemetadata.primarybistream.pattern");
-	
-	private static final Pattern PATTERN_SELECT_PRIMARY = Pattern.compile(REGEX_SELECT_PRIMARY);
+    private static final String REGEX_SELECT_PRIMARY = ConfigurationManager.getProperty("oai", "retrievemetadata.primarybistream.pattern");
+    
+    private static final Pattern PATTERN_SELECT_PRIMARY = Pattern.compile(REGEX_SELECT_PRIMARY);
     
     private static final MetadataExposureService metadataExposureService
             = UtilServiceFactory.getInstance().getMetadataExposureService();
@@ -193,26 +193,26 @@ public class ItemUtils
                     valueElem.getField().add(createValue("confidence", val.getConfidence() + ""));
             }
 
-				AuthorityValue authorityValue = authorityValueService.findByUID(context, val.getAuthority());
-				if (authorityValue!=null) {
-					if (authorityValue instanceof FunderAuthorityValue) {
-						String id = ((FunderAuthorityValue) authorityValue).getFunderID();
-						valueElem.getField().add(createValue("authorityID", "http://dx.doi.org/" + id));						
-						valueElem.getField().add(createValue(val.getAuthority(), "http://dx.doi.org/" + id));						
+                AuthorityValue authorityValue = authorityValueService.findByUID(context, val.getAuthority());
+                if (authorityValue!=null) {
+                    if (authorityValue instanceof FunderAuthorityValue) {
+                        String id = ((FunderAuthorityValue) authorityValue).getFunderID();
+                        valueElem.getField().add(createValue("authorityID", "http://dx.doi.org/" + id));                        
+                        valueElem.getField().add(createValue(val.getAuthority(), "http://dx.doi.org/" + id));                       
 
-					} else if (authorityValue instanceof Orcidv2AuthorityValue) {
-						String id = ((Orcidv2AuthorityValue) authorityValue).getOrcid_id();
-						valueElem.getField().add(createValue("authorityID", "http://orcid.org/"+id));
-						valueElem.getField().add(createValue(val.getAuthority(), "http://orcid.org/"+id));
-					}
-					else if (authorityValue instanceof ProjectAuthorityValue){
-						FunderAuthorityValue funderAuthorityValue = ((ProjectAuthorityValue) authorityValue).getFunderAuthorityValue();
-						if(funderAuthorityValue!=null) {
-							String funderAuthorityId = funderAuthorityValue.getId();
-							valueElem.getField().add(createValue("funderAuthorityID", funderAuthorityId));
-						}
-					}
-				}
+                    } else if (authorityValue instanceof Orcidv2AuthorityValue) {
+                        String id = ((Orcidv2AuthorityValue) authorityValue).getOrcid_id();
+                        valueElem.getField().add(createValue("authorityID", "http://orcid.org/"+id));
+                        valueElem.getField().add(createValue(val.getAuthority(), "http://orcid.org/"+id));
+                    }
+                    else if (authorityValue instanceof ProjectAuthorityValue){
+                        FunderAuthorityValue funderAuthorityValue = ((ProjectAuthorityValue) authorityValue).getFunderAuthorityValue();
+                        if(funderAuthorityValue!=null) {
+                            String funderAuthorityId = funderAuthorityValue.getId();
+                            valueElem.getField().add(createValue("funderAuthorityID", funderAuthorityId));
+                        }
+                    }
+                }
         }
         // Done! Metadata has been read!
         // Now adding bitstream info
@@ -234,35 +234,34 @@ public class ItemUtils
                 bundle.getElement().add(bitstreams);
                 List<Bitstream> bits = b.getBitstreams();
                 
+                // primary, if set, will store the ID of the primary bitstream in the Original bundle
                 UUID primary = null;
-                for (Bitstream bit : bits)
-                {
-                    // Check if current bitstream is in original bundle + 1 of the 2 following
-                    // Bitstream = primary bitstream in bundle -> true
-                    if ("ORIGINAL".equals(b.getName()) && (b.getPrimaryBitstream() != null && b.getPrimaryBitstream().getID().equals(bit.getID()))) {
-                        primary = bit.getID();
+                // If this is original bundle, then need to select primary bitstream, which 
+                // will be one which was manually selected, or the first whose filename matches 
+                // regex pattern, or the first listed.
+                if ("ORIGINAL".equals(b.getName())) {
+                    // primary was manually set
+                    if (b.getPrimaryBitstream() != null) {
+                        primary = b.getPrimaryBitstream().getID();
                     }
-                    
-                    // No primary bitstream found in bundle-> check the regex 
-                    if(primary==null) {
-                    	if ("ORIGINAL".equals(b.getName()) && b.getPrimaryBitstream() == null && PATTERN_SELECT_PRIMARY.matcher(bit.getName()).matches()) {
-                    		primary = bit.getID();
-                    	}
+                    else {
+                        // No manually set primary, so see if any bitstream has filename matching pattern
+                        for (Bitstream bit : bits)
+                        {
+                            if (PATTERN_SELECT_PRIMARY.matcher(bit.getName()).matches()) {
+                                primary = bit.getID();
+                                break;
+                                }
+                        }
                     }
-
-                    if(primary!=null) {
-                    	break;
+                    // Fall-back is the first bitstream listed 
+                    if (primary == null && bits.size() > 0) {
+                        primary = bits.get(0).getID()
                     }
                 }
+
                 for (Bitstream bit : bits)
                 {
-                    // No primary bitstream found in bundle-> only the first one gets flagged as "primary"                	
-                	if(primary==null) {
-                		if ("ORIGINAL".equals(b.getName()) && (b.getPrimaryBitstream() == null && bit.getID().equals(bits.get(0).getID()))) {
-                			primary = bit.getID();
-                		}
-                	}
-                    
                     Element bitstream = create("bitstream");
                     bitstreams.getElement().add(bitstream);
                     String url = "";
@@ -328,11 +327,10 @@ public class ItemUtils
                     bitstream.getField().add(
                             createValue("checksumAlgorithm", cka));
                     bitstream.getField().add(
-                            createValue("sid", bit.getSequenceID()
-                                    + ""));
-						bitstream.getField().add(
-								createValue("primary", ((primary!=null && primary.equals(bit.getID()))?true:false)
-										+ ""));
+                            createValue("sid", bit.getSequenceID() + ""));
+                    bitstream.getField().add(
+                            // "primary" is set to "true" or "false"
+                            createValue("primary", (primary != null && primary.equals(bit.getID())) + ""));
                 }
             }
         }
@@ -404,23 +402,23 @@ public class ItemUtils
         return metadata;
     }
     
-	private static void addEmbargoField(Context context, Bitstream bit, Element bitstream) throws SQLException {
+    private static void addEmbargoField(Context context, Bitstream bit, Element bitstream) throws SQLException {
 
-		List<ResourcePolicy> policies = authorizeService.getPoliciesActionFilter(context, bit, Constants.READ);
-		Group group = groupService.findByName(context, Group.ANONYMOUS);
+        List<ResourcePolicy> policies = authorizeService.getPoliciesActionFilter(context, bit, Constants.READ);
+        Group group = groupService.findByName(context, Group.ANONYMOUS);
 
-		for (ResourcePolicy policy : policies) {
-			if(policy.getGroup()!=null) {
-				if (group.equals(policy.getGroup())) {
-					Date startDate = policies.get(0).getStartDate();
-	
-					if (startDate != null && startDate.after(new Date())) {
-						SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
-						bitstream.getField().add(
-								createValue("embargo", formatter.format(startDate)));
-					}
-				}
-			}
-		}
-	}
+        for (ResourcePolicy policy : policies) {
+            if(policy.getGroup()!=null) {
+                if (group.equals(policy.getGroup())) {
+                    Date startDate = policies.get(0).getStartDate();
+    
+                    if (startDate != null && startDate.after(new Date())) {
+                        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+                        bitstream.getField().add(
+                                createValue("embargo", formatter.format(startDate)));
+                    }
+                }
+            }
+        }
+    }
 }
