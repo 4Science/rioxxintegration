@@ -84,11 +84,15 @@ public class RIOXXConsumer implements Consumer {
     }
 
     public void end(Context ctx) throws Exception {
+	ctx.turnOffAuthorisationSystem();
         for (UUID itemId : itemIds) {
             Item item = itemService.find(ctx, itemId);
+	    if (log.isDebugEnabled()) {
+		// leave out of the next if/else to highlight state of the consumer (throw NPE)
+		log.debug("updating funders of item " + item.getID());
+	    }
             
             if(item!=null) {
-	            log.debug("updating funders of item " + item.getID());
 	
 	            List<MetadataValue> metadatum = itemService.getMetadata(item, "dc", "sword", "submission", Item.ANY);
 	            if (!(metadatum.size() == 0 || StringUtils.equals(metadatum.get(0).getValue(), "false"))) {
@@ -176,7 +180,7 @@ public class RIOXXConsumer implements Consumer {
             }
         }
         itemIds.clear();
-
+        ctx.restoreAuthSystemState();
     }
 
     private boolean handleAuthorityControlledMetadatum(Context ctx, Item item, MetadataValue m) throws SQLException, AuthorizeException {
