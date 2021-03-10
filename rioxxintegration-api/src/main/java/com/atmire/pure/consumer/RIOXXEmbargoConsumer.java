@@ -55,10 +55,13 @@ public class RIOXXEmbargoConsumer implements Consumer {
     }
 
     public void end(Context ctx) throws Exception {
+	ctx.turnOffAuthorisationSystem();
         for (Integer itemId : itemIds) {
             Item item = Item.find(ctx, itemId);
-            log.debug("updating rioxxEmbargo of item " + item.getID());
-
+	    if (log.isDebugEnabled()) {
+		log.debug("updating rioxxEmbargo of item " + item.getID());
+	    }
+	    if(item!=null) {
             Metadatum[] metadatum = item.getMetadata("dc", "sword", "submission", Item.ANY);
             if (metadatum.length > 0 && StringUtils.equals(metadatum[0].value, "true")) {
                 Metadatum[] dateMetadatum = item.getMetadata("dc", "rights", "embargodate", Item.ANY);
@@ -69,12 +72,12 @@ public class RIOXXEmbargoConsumer implements Consumer {
                     }
                 }
             }
+	    }
         }
         itemIds.clear();
         // commit context
         ctx.getDBConnection().commit();
-
-
+        ctx.restoreAuthSystemState();
     }
 
     private void processOriginalBundleWithPolicyStartDate(Context ctx, Item item, DCDate policyStartDate)

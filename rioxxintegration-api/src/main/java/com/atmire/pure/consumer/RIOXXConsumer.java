@@ -68,10 +68,14 @@ public class RIOXXConsumer implements Consumer {
     }
 
     public void end(Context ctx) throws Exception {
+	ctx.turnOffAuthorisationSystem();
         for (Integer itemId : itemIds) {
             Item item = Item.find(ctx, itemId);
-            log.debug("updating funders of item " + item.getID());
+            if(log.isDebugEnabled()) {
+		log.debug("updating funders of item " + item.getID());
+            }
 
+            if(item!=null) {
             Metadatum[] metadatum = item.getMetadata("dc", "sword", "submission", Item.ANY);
             if (!(metadatum.length == 0 || StringUtils.equals(metadatum[0].value, "false"))) {
                 Metadatum[] metadata = item.getMetadata("rioxxterms", "newfunderprojectpair", null, Item.ANY);
@@ -139,11 +143,12 @@ public class RIOXXConsumer implements Consumer {
                 }
                 item.update();
             }
+            }
         }
         itemIds.clear();
         // commit context
         ctx.getDBConnection().commit();
-
+        ctx.restoreAuthSystemState();
 
     }
 
