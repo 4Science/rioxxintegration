@@ -85,7 +85,9 @@ public class ComplianceCheckServiceBean implements ComplianceCheckService {
             removeFakeValues(context, fakeFields, item);
             
             try {
-				getItemService().update(context, item);
+        	context.turnOffAuthorisationSystem();
+        	getItemService().update(context, item);
+        	context.restoreAuthSystemState();
             } catch(Exception ex) {
                 log.warn(ex.getMessage(), ex);
             }
