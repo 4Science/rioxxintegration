@@ -322,11 +322,6 @@ The XML schema allows for additional author attributes to be supplied in the XML
 	
 Please note that these attributes will not be stored as metadata in the ingested item itself but, if the corresponding dspace fields (see [SWORD V2 Rioxx mappings](#swordv2-mapping)) are defined in your repository in the authority core, they will be stored as attributes of the author record within the SOLR core (which means that these attributes are available when using the author lookup in a manual submission for example).
 
-NOTE: to select "first-named-author=true" on dc.contributor.author the user can add attribute corresp="true" to the ingested xml sword file.
-```
-<pubr:contributor id="http://orcid.org/0000-0002-8257-7777" email="johnsmith@yahoo.com">Smith, John </pubr:contributor>
-<pubr:author id="http://orcid.org/0000-0002-8257-4088" email="teva@yahoo.com" corresp="true">Vernoux, Teva </pubr:author>
-```
 
 ### SWORD V2 Example Ingestion with Curl <a name="swordv2-curl"></a>
 

@@ -154,73 +154,31 @@
                 </rioxxterms:apc>
             </xsl:for-each>
 
-			<xsl:choose>
-			<xsl:when test="doc:metadata/doc:element[@name='rioxxterms']/doc:element[@name='contributor']/doc:element[@name='correspondingauthor']/doc:element/doc:field[@name='value']">
-			
-	            <xsl:for-each select="doc:metadata/doc:element[@name='rioxxterms']/doc:element[@name='contributor']/doc:element[@name='correspondingauthor']/doc:element/doc:field[@name='value']">
-	                <xsl:variable name="authority">
-	                    <xls:value-of select="following-sibling::*[@name='authority']"/>
-	                </xsl:variable>
-	                <rioxxterms:author>
-	                <xsl:attribute name="first-named-author">
-                          <xsl:text>true</xsl:text>
-	                </xsl:attribute>                	
-	                    <xsl:if test="parent::doc:element/doc:field[@name=$authority]">
-	                        <xsl:attribute name="id" namespace="http://www.rioxx.net/schema/v2.0/rioxxterms/">
-	                            <xsl:value-of select="parent::doc:element/doc:field[@name=$authority]"/>
-	                        </xsl:attribute>
-	                    </xsl:if>
-	                    <xls:value-of select="."/>
-	                </rioxxterms:author>
-	            </xsl:for-each>
 
-	            <xsl:for-each select="doc:metadata/doc:element[@name='rioxxterms']/doc:element[@name='contributor']/doc:element[@name='otherauthor']/doc:element/doc:field[@name='value']">
-	                <xsl:variable name="authority">
-	                    <xls:value-of select="following-sibling::*[@name='authority']"/>
-	                </xsl:variable>
-	                <rioxxterms:author>
-	                <xsl:attribute name="first-named-author">
-                          <xsl:text>false</xsl:text>
-	                </xsl:attribute>                	
-	                    <xsl:if test="parent::doc:element/doc:field[@name=$authority]">
-	                        <xsl:attribute name="id" namespace="http://www.rioxx.net/schema/v2.0/rioxxterms/">
-	                            <xsl:value-of select="parent::doc:element/doc:field[@name=$authority]"/>
-	                        </xsl:attribute>
-	                    </xsl:if>
-	                    <xls:value-of select="."/>
-	                </rioxxterms:author>
-	            </xsl:for-each>
-	            	            
-	        </xsl:when>
-	        <xsl:otherwise>
+            <xsl:for-each select="doc:metadata/doc:element[@name='dc']/doc:element[@name='contributor']/doc:element[@name='author']/doc:element/doc:field[@name='value']">
+                <xsl:variable name="authority">
+                    <xls:value-of select="following-sibling::*[@name='authority']"/>
+                </xsl:variable>
+                <rioxxterms:author>
+                <xsl:attribute name="first-named-author">
+                    <xsl:choose>
+                        <xsl:when test="position()=1">
+                            <xsl:text>true</xsl:text>
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <xsl:text>false</xsl:text>
+                        </xsl:otherwise>
+                    </xsl:choose>
+                </xsl:attribute>                	
+                    <xsl:if test="parent::doc:element/doc:field[@name=$authority]">
+                        <xsl:attribute name="id" namespace="http://www.rioxx.net/schema/v2.0/rioxxterms/">
+                            <xsl:value-of select="parent::doc:element/doc:field[@name=$authority]"/>
+                        </xsl:attribute>
+                    </xsl:if>
+                    <xls:value-of select="."/>
+                </rioxxterms:author>
+            </xsl:for-each>
 
-	            <xsl:for-each select="doc:metadata/doc:element[@name='dc']/doc:element[@name='contributor']/doc:element[@name='author']/doc:element/doc:field[@name='value']">
-	                <xsl:variable name="authority">
-	                    <xls:value-of select="following-sibling::*[@name='authority']"/>
-	                </xsl:variable>
-	                <rioxxterms:author>
-	                <xsl:attribute name="first-named-author">
-	                    <xsl:choose>
-	                        <xsl:when test="position()=1">
-	                            <xsl:text>true</xsl:text>
-	                        </xsl:when>
-	                        <xsl:otherwise>
-	                            <xsl:text>false</xsl:text>
-	                        </xsl:otherwise>
-	                    </xsl:choose>
-	                </xsl:attribute>                	
-	                    <xsl:if test="parent::doc:element/doc:field[@name=$authority]">
-	                        <xsl:attribute name="id" namespace="http://www.rioxx.net/schema/v2.0/rioxxterms/">
-	                            <xsl:value-of select="parent::doc:element/doc:field[@name=$authority]"/>
-	                        </xsl:attribute>
-	                    </xsl:if>
-	                    <xls:value-of select="."/>
-	                </rioxxterms:author>
-	            </xsl:for-each>
-	            	        
-	        </xsl:otherwise>    
-			</xsl:choose>
-			
             <xsl:for-each select="doc:metadata/doc:element[@name='dc']/doc:element[@name='contributor']/doc:element[not(@name='author')]/doc:element/doc:field[@name='value']
                                     | doc:metadata/doc:element[@name='dc']/doc:element[@name='contributor']/doc:element/doc:field[@name='value']">
                 <rioxxterms:contributor>

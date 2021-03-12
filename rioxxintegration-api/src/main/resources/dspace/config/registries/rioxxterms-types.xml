@@ -95,18 +95,4 @@
         <scope_note></scope_note>
     </dc-type>
 
-    <dc-type>
-        <schema>rioxxterms</schema>
-        <element>contributor</element>
-        <qualifier>correspondingauthor</qualifier>
-        <scope_note></scope_note>
-    </dc-type>
-
-    <dc-type>
-        <schema>rioxxterms</schema>
-        <element>contributor</element>
-        <qualifier>otherauthor</qualifier>
-        <scope_note></scope_note>
-    </dc-type>    
-    
 </dspace-dc-types>
