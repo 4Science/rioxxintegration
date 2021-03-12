@@ -80,8 +80,9 @@ public class DSpaceAuthorityIndexer implements AuthorityIndexerInterface, Initia
     public List<AuthorityValue> getAuthorityValues(Context context, Item item, Map<String, AuthorityValue> cache)
             throws SQLException, AuthorizeException
     {
+	context.turnOffAuthorisationSystem();
         List<AuthorityValue> values = new ArrayList<>();
-
+        
         for (String metadataField : metadataFields) {
             List<MetadataValue> metadataValues = itemService.getMetadataByMetadataString(item, metadataField);
             for (MetadataValue metadataValue : metadataValues) {
@@ -130,7 +131,8 @@ public class DSpaceAuthorityIndexer implements AuthorityIndexerInterface, Initia
                 }
             }
         }
-
+        
+        context.restoreAuthSystemState();
         return values;
     }
 
