@@ -7,14 +7,20 @@
  */
 package com.atmire.swordapp.server;
 
-import com.atmire.pure.consumer.RIOXXConsumer;
-import com.atmire.swordapp.server.util.*;
-import java.util.*;
-import org.apache.abdera.model.*;
-import org.apache.commons.lang.*;
-import org.dspace.content.authority.*;
-import org.dspace.core.*;
-import org.swordapp.server.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.abdera.model.Element;
+import org.apache.abdera.model.Entry;
+import org.apache.commons.lang.StringUtils;
+import org.dspace.content.authority.MetadataAuthorityManager;
+import org.dspace.core.ConfigurationManager;
+import org.swordapp.server.SwordEntry;
+
+import com.atmire.swordapp.server.util.SimpleRioxxMetadataHelper;
 
 public class RioxxSwordEntry extends SwordEntry {
 
@@ -77,16 +83,6 @@ public class RioxxSwordEntry extends SwordEntry {
                     value += "::" + email;
                 }
             }
-        }
-        //only to check extra attribute to find corresponding author on pubr.author
-        if(StringUtils.equals(field, "pubr.author")) {
-        	String correspondingAuthor = element.getAttributeValue("corresp");
-        	if(StringUtils.isNotBlank(correspondingAuthor)) {
-        		Boolean correspondingAuthorBoolean = BooleanUtils.toBoolean(correspondingAuthor);
-        		if(correspondingAuthorBoolean) {
-        			value += RIOXXConsumer.CORRESPONDINGAUTHOR;
-        		}
-        	}
         }
         return value;
     }
