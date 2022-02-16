@@ -349,8 +349,8 @@ curl -X POST -v -i <*your DSpace repository*>/edit/3 -H "In-Progress: false" -H 
 A new simplified addon has been released by 4Science built as a Maven Module. The artifacts for DSpace 5.10 and DSpace 6.3 have been released as public on <a href="https://nexus.4science.it/">4Science Nexus repository</a>
 
 **__Important note__**: if you use DSpace 5.10 or DSpace 6.3 default versions you have to IMMEDIATELLY UPGRADE to the last line of development (5.11-SNAPSHOT or 6.4-SNAPSHOT). This is required because these versions may have some malfunctions due to dependencies (e.g. upgrade for Bower, JRuby, SASS dependency) or changed third party policies (e.g. GeoLite database feature for geolocation points). 
-* to upgrade your DSpace from 5.10 to 5.11-SNAPSHOT use https://github.com/4Science/rioxxintegration/releases/download/5.10.0/jisc-from-5_10-to-5_11-patch.diff
-* to upgrade your DSpace from 6.3 to 6.4-SNAPSHOT (current last commit 5c5e415276e11bfafaabb51819b38278862c2e91) use https://github.com/4Science/rioxxintegration/releases/download/6.4.0-beta6/jisc-from-6_3-to-5c5e415276e11bfafaabb51819b38278862c2e91-patch.diff
+* to upgrade your DSpace from 5.10 to 5.11-SNAPSHOT use https://github.com/4Science/rioxxintegration/releases/download/5.11.0-beta6/jisc-from-5_10-to-5_11-patch.diff
+* to upgrade your DSpace from 6.3 to 6.4-SNAPSHOT (current last commit 5c5e415276e11bfafaabb51819b38278862c2e91) use https://github.com/4Science/rioxxintegration/releases/download/6.4.0-beta7/jisc-from-6_3-to-5c5e415276e11bfafaabb51819b38278862c2e91-patch.diff
 
 To be able to install the patch, you will need the following prerequisites:
 
@@ -361,8 +361,8 @@ To be able to install the patch, you will need the following prerequisites:
 
 After upgrading your DSpace at 5.11-SNAPSHOT or 6.4-SNAPSHOT (currently the released date of stable versions is not yet known) you can install the patch to download the RIOXX Integration during the default DSpace build procedure. The patch upgrades the Maven POM files to retrieve and install the RIOXX code customizations.
 
-* dependencies for 5.x: https://github.com/4Science/rioxxintegration/releases/download/5.11.0-beta5/jisc-5_11-SNAP-patch.diff
-* dependencies for 6.x: https://github.com/4Science/rioxxintegration/releases/download/6.4.0-beta6/jisc-6_4-SNAP-patch.diff
+* dependencies for 5.x: https://github.com/4Science/rioxxintegration/releases/download/5.11.0-beta6/jisc-5_11-SNAP-patch.diff
+* dependencies for 6.x: https://github.com/4Science/rioxxintegration/releases/download/6.4.0-beta7/jisc-6_4-SNAP-patch.diff
 
 
 ### 1. Run the pre-requisite Git command. <a name="run-git-command"></a>
