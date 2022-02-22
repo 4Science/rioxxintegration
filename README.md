@@ -62,30 +62,30 @@ It is important to realize that your existing item metadata and item display pag
 
 Because the vast majority of institutions make at least small tweaks to the submission forms, there is no opportunity to apply a patch to a standardized file. A template submission form file where the new REF and RIOXX fields are highlighted can be found on Github:
 
-[https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/input-forms.xml](https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/input-forms.xml) 
-[https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/item-submission.xml](https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/item-submission.xml) 
+[https://github.com/4Science/rioxxintegration/tree/master/example/input-forms.xml](https://github.com/4Science/rioxxintegration/tree/master/example/input-forms.xml) 
+[https://github.com/4Science/rioxxintegration/tree/master/example/item-submission.xml](https://github.com/4Science/rioxxintegration/tree/master/example/item-submission.xml) 
 
 See rioxxterms.* fields + value pairs + dcterms.dateAccepted 
 
 Please note that we have also provided examples for *REF only* or *RIOXX only* input forms and submission configuration: 
-[https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/input-forms-ref.xml](https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/input-forms-ref.xml)
-[https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/item-submission-ref.xml](https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/item-submission-ref.xml)
+[https://github.com/4Science/rioxxintegration/tree/master/example/input-forms-ref.xml](https://github.com/4Science/rioxxintegration/tree/master/example/input-forms-ref.xml)
+[https://github.com/4Science/rioxxintegration/tree/master/example/item-submission-ref.xml](https://github.com/4Science/rioxxintegration/tree/master/example/item-submission-ref.xml)
 
-[https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/input-forms-rioxx.xml](https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/input-forms-rioxx.xml)
-[https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/item-submission-rioxx.xml](https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/item-submission-rioxx.xml)
+[https://github.com/4Science/rioxxintegration/tree/master/example/input-forms-rioxx.xml](https://github.com/4Science/rioxxintegration/tree/master/example/input-forms-rioxx.xml)
+[https://github.com/4Science/rioxxintegration/tree/master/example/item-submission-rioxx.xml](https://github.com/4Science/rioxxintegration/tree/master/example/item-submission-rioxx.xml)
 
 ## Compatibility with the REF patch  <a name="Compatibility-with-the-REF-patch"></a>
 
 The RIOXX patch contains also the REF patch. Both are installed at the same time. But you can choose to disable REF feature.
 
 To disable the REF feature set the follow configuration to **false**:
-1. [https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/modules/rioxx.cfg#L9](https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/modules/rioxx.cfg#L9)
-2. [https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/modules/item-compliance.cfg#L32](https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/modules/item-compliance.cfg#L32)
+1. [https://github.com/4Science/rioxxintegration/tree/master/example/modules/rioxx.cfg#L9](https://github.com/4Science/rioxxintegration/tree/master/example/modules/rioxx.cfg#L9)
+2. [https://github.com/4Science/rioxxintegration/tree/master/example/modules/item-compliance.cfg#L32](https://github.com/4Science/rioxxintegration/tree/master/example/modules/item-compliance.cfg#L32)
 
 Manually change this configuration:
-1. From [https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/input-forms.xml](https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/input-forms.xml) remove the metadata: refterms.panel and refterms.dateFirstOnline
-2. From [https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/item-submission.xml](https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/item-submission.xml) remove the step: REFExceptionStep and REFComplianceStep
-3. If you enabled the XML Workflow please remove https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/workflow.xml#L38 and https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/workflow.xml#L56
+1. From [https://github.com/4Science/rioxxintegration/tree/master/example/input-forms.xml](https://github.com/4Science/rioxxintegration/tree/master/example/input-forms.xml) remove the metadata: refterms.panel and refterms.dateFirstOnline
+2. From [https://github.com/4Science/rioxxintegration/tree/master/example/item-submission.xml](https://github.com/4Science/rioxxintegration/tree/master/example/item-submission.xml) remove the step: REFExceptionStep and REFComplianceStep
+3. If you enabled the XML Workflow please remove https://github.com/4Science/rioxxintegration/tree/master/example/workflow.xml#L38 and https://github.com/4Science/rioxxintegration/tree/master/example/workflow.xml#L56
 
 
 # Metadata mapping <a name="Metadata-mapping"></a>
@@ -133,7 +133,7 @@ Existing fields from the dc and dcterms namespace were used where possible. A nu
 
 Because DSpace supports multiple files per attached metadata record, there is a split between information stored in the metadata record and information stored with the bitstreams.  
 
-For the three fields shown in the table below, data is retrieved from the bitstream metadata for the bitstream indicated as the "primary bitstream" ("embargo" information is currently retrieved on all bitstreams of the ORIGINAL bundle). Logic for selection of the primary bitstream has been improved by adding the option of identifying it by matching the filename to a regex pattern  (check https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/modules/oai.cfg#L120). By default if the user manually selected the bitstream as primary then the RIOXX OAI context will honour that, otherwise the bitstream filenames will be compared to the regex and if a match is found that will be designated the primary; if there is no regex match then primary bitstream defaults to the first in the list of the uploaded files.
+For the three fields shown in the table below, data is retrieved from the bitstream metadata for the bitstream indicated as the "primary bitstream" ("embargo" information is currently retrieved on all bitstreams of the ORIGINAL bundle). Logic for selection of the primary bitstream has been improved by adding the option of identifying it by matching the filename to a regex pattern  (check https://github.com/4Science/rioxxintegration/tree/master/example/modules/oai.cfg#L120). By default if the user manually selected the bitstream as primary then the RIOXX OAI context will honour that, otherwise the bitstream filenames will be compared to the regex and if a match is found that will be designated the primary; if there is no regex match then primary bitstream defaults to the first in the list of the uploaded files.
 
 | DSpace bitstream | RIOXX element | example DSpace value| example RIOXX value|
 |----------------|----------------|----------------------|---------------------|
@@ -488,7 +488,7 @@ On this page, you should be able to see the new RIOXX metadata schema. When clic
 
 This verification assumes that you have modified your input-forms.xml based on:
 
-[https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/input-forms.xml](https://github.com/4Science/rioxxintegration/blob/master/rioxxintegration-api/src/main/resources/dspace/config/input-forms.xml)
+[https://github.com/4Science/rioxxintegration/tree/master/example/input-forms.xml](https://github.com/4Science/rioxxintegration/tree/master/example/input-forms.xml)
 
 Start the submission of a new item in a DSpace collection that uses our custom submission form config.  
 After the collection selection, a custom step is included to support adding multiple funders and project IDs. In this step you should be able to add this field:
